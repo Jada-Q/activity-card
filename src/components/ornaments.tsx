@@ -1,147 +1,148 @@
-type SvgProps = React.SVGProps<SVGSVGElement>;
+/**
+ * Ornaments — the few shared decorations used across screens.
+ *
+ * The poster does the loud, dense, ornamental work; the app is its quiet
+ * functional counterpart that shares DNA (palette, grain atmosphere, type)
+ * but with inverted proportions. So this file is intentionally lean —
+ * removed: StampBurst, MinusPlusWaveBar, GridGlobe, Ribbon, sound wave.
+ * Kept: Letterpress (one hero moment per screen), Eyebrow (small caps
+ * labels), SeedAvatar (initials in pink-bordered square), CodeBrackets.
+ */
 
-export function SoundWave({ className, ...rest }: SvgProps) {
-  return (
-    <svg
-      viewBox="0 0 400 40"
-      className={className}
-      aria-hidden
-      {...rest}
-    >
-      <path
-        d="M0 20 Q 16 4, 32 20 T 64 20 T 96 20 T 128 20 T 160 20 T 192 20 T 224 20 T 256 20 T 288 20 T 320 20 T 352 20 T 384 20 T 400 20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
+import { type CSSProperties, type ReactNode } from 'react';
 
-export function GridGlobe({ className, ...rest }: SvgProps) {
+export function CodeBrackets({ children }: { children: ReactNode }) {
   return (
-    <svg viewBox="0 0 100 100" className={className} aria-hidden {...rest}>
-      <circle
-        cx="50"
-        cy="50"
-        r="42"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-      />
-      {/* longitudes (ellipses with varying rx) */}
-      {[8, 20, 32, 42].map((rx, i) => (
-        <ellipse
-          key={`lon-${i}`}
-          cx="50"
-          cy="50"
-          rx={rx}
-          ry="42"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          opacity={0.7}
-        />
-      ))}
-      {/* latitudes */}
-      {[10, 22, 34, 42].map((ry, i) => (
-        <ellipse
-          key={`lat-${i}`}
-          cx="50"
-          cy="50"
-          rx="42"
-          ry={ry}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          opacity={0.7}
-        />
-      ))}
-    </svg>
-  );
-}
-
-export function StampBurst({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={`relative inline-flex items-center justify-center ${className ?? ''}`}>
-      {/* radial ticks */}
-      <svg
-        viewBox="0 0 200 80"
-        className="absolute inset-0 h-full w-full text-pink"
-        aria-hidden
-      >
-        {/* horizontal hairlines on both sides */}
-        <line x1="0" y1="40" x2="55" y2="40" stroke="currentColor" strokeWidth="1" />
-        <line x1="145" y1="40" x2="200" y2="40" stroke="currentColor" strokeWidth="1" />
-        {/* radiating ticks around oval */}
-        {Array.from({ length: 24 }).map((_, i) => {
-          const angle = (i / 24) * Math.PI * 2;
-          const r1 = 36;
-          const r2 = 40;
-          const cx = 100;
-          const cy = 40;
-          const rx = 1.4;
-          const ry = 1;
-          const x1 = cx + Math.cos(angle) * r1 * rx;
-          const y1 = cy + Math.sin(angle) * r1 * ry;
-          const x2 = cx + Math.cos(angle) * r2 * rx;
-          const y2 = cy + Math.sin(angle) * r2 * ry;
-          return (
-            <line
-              key={i}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke="currentColor"
-              strokeWidth="1"
-              opacity={0.55}
-            />
-          );
-        })}
-        {/* oval body */}
-        <ellipse
-          cx="100"
-          cy="40"
-          rx="44"
-          ry="28"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.4"
-        />
-      </svg>
-      <div className="font-display relative z-10 px-6 text-center text-xs leading-tight text-pink sm:text-sm">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-export function MinusPlusWaveBar({ className }: { className?: string }) {
-  return (
-    <div
-      className={`pink-frame relative flex items-center justify-between px-4 py-3 ${className ?? ''}`}
-    >
-      <span className="font-display text-2xl leading-none text-pink">−</span>
-      <SoundWave className="mx-4 h-6 flex-1 text-pink" />
-      <span className="font-display text-2xl leading-none text-pink">+</span>
-    </div>
-  );
-}
-
-export function CodeBrackets({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="font-mono text-pink">
+    <span className="font-mono font-bold text-pink">
       <span className="mr-2 opacity-80">{'{'}</span>
       {children}
       <span className="ml-2 opacity-80">{'}'}</span>
     </span>
+  );
+}
+
+/**
+ * Eyebrow — small spaced caps label. Used above the hero on each screen.
+ */
+export function Eyebrow({
+  children,
+  color,
+  className = '',
+}: {
+  children: ReactNode;
+  color?: string;
+  className?: string;
+}) {
+  const style: CSSProperties = color ? { color } : {};
+  return (
+    <span
+      className={`font-mono text-[10px] font-bold uppercase tracking-[0.28em] text-pink-soft ${className}`}
+      style={style}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * Letterpress — pink fill type with grain knocked out of the letters
+ * themselves (via background-clip: text + SVG fractal noise). Reserve for
+ * one hero moment per screen (title or success state).
+ */
+export function Letterpress({
+  children,
+  className = '',
+  style,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <span
+      className={`letterpress-wrap ${className}`}
+      style={{ position: 'relative', display: 'inline-block', ...style }}
+    >
+      <span className="font-display lp-base">{children}</span>
+      <span className="font-display lp-grain" aria-hidden="true">
+        {children}
+      </span>
+      <LetterpressStyles />
+    </span>
+  );
+}
+
+function LetterpressStyles() {
+  return (
+    <style>{`
+      .letterpress-wrap { position: relative; display: inline-block; color: var(--color-pink); }
+      .letterpress-wrap .lp-base { color: var(--color-pink); }
+      .letterpress-wrap .lp-grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.6' numOctaves='2' stitchTiles='stitch' seed='9'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.7 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        background-size: 180px 180px;
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        mix-blend-mode: multiply;
+      }
+    `}</style>
+  );
+}
+
+/**
+ * SeedAvatar — initials in a pink-bordered square. Deterministic background
+ * variant by name hash so the same person always gets the same look.
+ */
+export function SeedAvatar({
+  seed = '',
+  size = 56,
+}: {
+  seed?: string;
+  size?: number;
+}) {
+  const initials =
+    (seed || '?')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase() || '?';
+
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  const variants = [
+    { bg: 'transparent', fg: 'var(--color-pink)' },
+    { bg: 'var(--color-pink)', fg: 'var(--color-ink)' },
+    { bg: 'var(--color-pink-deep)', fg: 'var(--color-pink)' },
+  ];
+  const v = variants[h % variants.length];
+  const fontSize = Math.round(size * 0.42);
+
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        border: '1.5px solid var(--color-pink)',
+        background: v.bg,
+        color: v.fg,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'var(--font-display-stack)',
+        fontSize,
+        lineHeight: 1,
+        letterSpacing: '0.02em',
+        flexShrink: 0,
+      }}
+    >
+      {initials}
+    </div>
   );
 }

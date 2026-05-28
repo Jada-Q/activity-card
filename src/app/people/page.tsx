@@ -1,9 +1,12 @@
 import Link from 'next/link';
 import { listPeople, type Person } from '@/lib/github-store';
+import { Eyebrow, Letterpress } from '@/components/ornaments';
 import { PeopleClient } from './people-client';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 10;
+
+const EVENT_NAME = 'AI MEETS HER';
 
 export default async function PeoplePage() {
   let people: Person[] = [];
@@ -15,39 +18,31 @@ export default async function PeoplePage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-md px-5 py-6 sm:max-w-2xl sm:px-8 sm:py-10">
-      <header className="mb-6 flex items-center justify-between">
+    <main className="fade-up mx-auto max-w-[520px] px-5 pb-20 pt-6 sm:px-8 sm:pt-10">
+      <header className="mb-[22px] flex items-center justify-between">
         <Link
           href="/"
-          className="font-mono text-xs text-pink-soft hover:text-pink"
+          className="font-mono text-xs tracking-[0.1em] text-pink-soft hover:text-pink"
         >
           ← back
         </Link>
-        <span className="font-mono text-xs text-cream-dim">
-          {'{ people }'}
+        <span className="font-mono text-[11px] text-cream-dim">
+          {'{ wall }'}
         </span>
       </header>
 
-      <div className="mb-7 flex items-end justify-between">
-        <div>
-          <h1 className="font-display text-pink-grain text-5xl leading-none">
-            ROOM
-          </h1>
-          <p className="font-mono mt-2 text-xs text-cream-dim">
-            {people.length} {people.length === 1 ? 'person' : 'people'} in the
-            room
-          </p>
-        </div>
-        <Link
-          href="/create"
-          className="font-display border-2 border-pink px-4 py-2 text-base text-pink transition-colors hover:bg-pink hover:text-ink"
-        >
-          + me
-        </Link>
+      <div className="mb-[22px]">
+        <Eyebrow>THE ROOM · LIVE</Eyebrow>
+        <h1 className="font-display mb-1 mt-2 text-[46px] leading-[0.95]">
+          <Letterpress>Who&apos;s here</Letterpress>
+        </h1>
+        <p className="font-mono mt-1.5 text-xs text-cream-dim">
+          ◆ {people.length} card{people.length === 1 ? '' : 's'} sealed at {EVENT_NAME}
+        </p>
       </div>
 
       {error && (
-        <div className="font-mono mb-5 border border-pink bg-pink/10 px-3 py-2 text-xs text-pink">
+        <div className="font-mono mb-4 border border-pink bg-pink/10 px-3 py-2 text-xs text-pink">
           ✕ Failed to load people: {error}
         </div>
       )}

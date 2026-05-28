@@ -2,11 +2,13 @@
 
 @theme {
   --color-ink: #0a0a0a;
-  --color-ink-soft: #141414;
+  --color-ink-soft: #121212;
   --color-ink-card: #181818;
-  --color-pink: #d87b9f;
+  --color-pink: #e47ba8;
+  --color-pink-bright: #ee8ab4;
   --color-pink-soft: #c46d8e;
   --color-pink-dim: #7a4258;
+  --color-pink-deep: #4a2734;
   --color-cream: #f2eae5;
   --color-cream-dim: #b8aea8;
   --color-grey: #6b6b6b;
@@ -15,6 +17,7 @@
 
   --font-display-stack: var(--font-display), 'Impact', 'Arial Black', sans-serif;
   --font-mono: var(--font-mono-stack), 'Menlo', monospace;
+  --font-jp-stack: var(--font-jp), 'Noto Sans JP', sans-serif;
 }
 
 :root {
@@ -30,35 +33,44 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Grain noise overlay — applied to body via ::before for perf isolation.
-   SVG fractal noise rendered once by browser then composited.
-   Heavier opacity for letterpress/zine feel matching poster. */
+body {
+  overflow-x: hidden;
+}
+
+/* Global grain — overlay blend, fixed so it doesn't scroll */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 100;
-  opacity: 0.32;
+  opacity: 0.38;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   background-size: 240px 240px;
 }
 
-/* Reduce motion + grain for accessibility */
+/* Vignette so saturation pops at center */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.5) 100%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   body::before {
-    opacity: 0.16;
+    opacity: 0.18;
   }
 }
 
-/* Selection */
 ::selection {
   background-color: var(--color-pink);
   color: var(--color-ink);
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -68,44 +80,57 @@ body::before {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-pink-dim);
-  border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-pink);
 }
 
-/* Display heading utility */
 .font-display {
   font-family: var(--font-display-stack);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.005em;
   text-transform: uppercase;
+  font-weight: 400;
 }
 
-/* Pink frame with inner grain — heavier opacity for poster letterpress feel */
+.font-jp {
+  font-family: var(--font-jp-stack);
+}
+
+/* Pink-frame: hot-pink hairline border, transparent interior (no grain
+   inside). Body-level grain is the only atmosphere — keeps app as flat
+   counterpart to the loud, dense poster. */
 .pink-frame {
   border: 1.5px solid var(--color-pink);
   position: relative;
+  background: transparent;
 }
-.pink-frame::after {
+.pink-frame > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Opt-in: poster-style frame with grainy interior */
+.pink-frame-grain::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.48  0 0 0 0 0.62  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.89  0 0 0 0 0.48  0 0 0 0 0.66  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   background-size: 160px 160px;
   mix-blend-mode: screen;
   opacity: 0.5;
+  z-index: 0;
 }
 
-/* Pink text with grain dust */
+/* Pink text with grain dust — functional label energy, not poster-title energy */
 .text-pink-grain {
   color: var(--color-pink);
   text-shadow:
     0 0 1px var(--color-pink-soft),
-    0 0 8px rgba(216, 123, 159, 0.35);
+    0 0 8px rgba(228, 123, 168, 0.32);
 }
 
-/* Hairline divider used in the poster */
+/* Hairline divider */
 .hairline {
   height: 1px;
   background: linear-gradient(
@@ -114,4 +139,56 @@ body::before {
     var(--color-pink-soft),
     transparent
   );
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-up {
+  animation: fadeUp 360ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes scanFlick {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.scan-flick {
+  animation: scanFlick 1.6s ease-in-out infinite;
+}
+
+@keyframes flickerIn {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.5;
+  }
+  35% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  65% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.flicker-in {
+  animation: flickerIn 700ms steps(8) both;
 }

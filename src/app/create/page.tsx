@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Eyebrow, Letterpress } from '@/components/ornaments';
 
 const SUGGESTED_TAGS = [
   'AI',
@@ -20,6 +21,7 @@ const SUGGESTED_TAGS = [
 ];
 
 const MAX_TAGS = 3;
+const MY_CARD_ID_KEY = 'ac:my-card-id';
 
 export default function CreatePage() {
   const router = useRouter();
@@ -68,6 +70,14 @@ export default function CreatePage() {
         setSubmitting(false);
         return;
       }
+      // Persist the just-created id so /people can flag this card as "YOU"
+      try {
+        if (json.data?.id) {
+          localStorage.setItem(MY_CARD_ID_KEY, String(json.data.id));
+        }
+      } catch {
+        /* localStorage may be blocked — non-blocking */
+      }
       // GitHub Issues has ~3-5s eventual consistency on labels filter;
       // hold success state then redirect so user lands on a populated /people.
       setSuccess(true);
@@ -80,42 +90,51 @@ export default function CreatePage() {
 
   if (success) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-5 py-6">
-        <div className="pink-frame w-full px-6 py-10 text-center">
-          <p className="font-display text-pink-grain text-5xl leading-none">
-            ✓
+      <main className="mx-auto flex min-h-screen max-w-[520px] items-center justify-center px-5 py-6">
+        <div className="pink-frame flicker-in w-full max-w-[360px] px-8 py-12 text-center">
+          <Eyebrow>SEALED · LIVE</Eyebrow>
+          <p
+            className="font-display m-0 mt-[14px] leading-none"
+            style={{ color: 'var(--color-pink)', fontSize: 72 }}
+          >
+            <Letterpress>✓</Letterpress>
           </p>
-          <h2 className="font-display text-pink-grain mt-4 text-3xl leading-tight">
-            Card Live
+          <h2 className="font-display mt-4 mb-1.5 text-[28px] leading-[1.05]">
+            <Letterpress>Card Live</Letterpress>
           </h2>
-          <p className="font-mono mt-4 text-xs text-cream-dim">
+          <p className="font-mono mt-1.5 text-xs text-cream-dim">
             joining the room...
           </p>
-          <div className="hairline mx-auto mt-6 w-24" />
+          <div className="hairline mx-auto mt-5 w-[100px]" />
+          <div className="scan-flick mt-3.5">
+            <span className="font-mono text-[10px] tracking-[0.3em] text-pink-soft">
+              SYNCING · STAND BY
+            </span>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-md px-5 py-6 sm:max-w-lg sm:px-8 sm:py-10">
-      <header className="mb-6 flex items-center justify-between">
+    <main className="fade-up mx-auto max-w-[520px] px-5 pb-20 pt-6 sm:px-8 sm:pt-10">
+      <header className="mb-[22px] flex items-center justify-between">
         <Link
           href="/"
-          className="font-mono text-xs text-pink-soft hover:text-pink"
+          className="font-mono text-xs tracking-[0.1em] text-pink-soft hover:text-pink"
         >
           ← back
         </Link>
-        <span className="font-mono text-xs text-cream-dim">
+        <span className="font-mono text-[11px] text-cream-dim">
           {'{ create_card }'}
         </span>
       </header>
 
-      <h1 className="font-display text-pink-grain mb-1 text-4xl leading-none">
-        Your Card
+      <h1 className="font-display m-0 mb-1 text-[46px] leading-[0.95]">
+        <Letterpress>Your Card</Letterpress>
       </h1>
-      <p className="font-mono mb-7 text-xs text-cream-dim">
-        Fill it once. Find your match.
+      <p className="font-mono mb-7 mt-1.5 text-xs text-cream-dim">
+        ◆ Fill it once. Find your match.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -146,7 +165,7 @@ export default function CreatePage() {
         />
         <Field
           label="Social handle"
-          hint="@you on IG / X / wherever you wanna be found"
+          hint="@you on IG / X / wherever"
           value={social}
           onChange={setSocial}
           maxLength={80}
@@ -155,17 +174,17 @@ export default function CreatePage() {
 
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between">
-            <label className="font-mono text-sm uppercase tracking-wide text-pink">
+            <label className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-pink">
               Tags (max {MAX_TAGS})
             </label>
-            <span className="font-mono text-xs text-cream-dim">
+            <span className="font-mono text-[11px] text-cream-dim">
               {tags.length}/{MAX_TAGS}
             </span>
           </div>
           <p className="font-mono text-[11px] text-cream-dim">
             pick what describes your vibe
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="mt-1 flex flex-wrap gap-1.5">
             {SUGGESTED_TAGS.map((t) => {
               const active = tags.includes(t);
               const disabled = !active && tags.length >= MAX_TAGS;
@@ -175,9 +194,9 @@ export default function CreatePage() {
                   type="button"
                   onClick={() => toggleTag(t)}
                   disabled={disabled}
-                  className={`font-mono border px-3 py-1 text-xs uppercase tracking-wide transition-colors ${
+                  className={`font-mono border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.06em] transition-colors ${
                     active
-                      ? 'border-pink bg-pink text-ink'
+                      ? 'border-pink bg-pink font-bold text-ink'
                       : 'border-border-faint text-cream-dim hover:border-pink hover:text-pink'
                   } ${disabled ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'}`}
                 >
@@ -197,10 +216,14 @@ export default function CreatePage() {
         <button
           type="submit"
           disabled={submitting || !name.trim()}
-          className="font-display mt-3 border-2 border-pink bg-pink py-4 text-2xl tracking-wide text-ink transition-colors hover:bg-pink-soft active:bg-pink-dim disabled:cursor-not-allowed disabled:opacity-40"
+          className="font-display mt-2 w-full border-2 border-pink bg-pink py-[14px] text-center text-2xl uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright active:bg-pink-soft disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {submitting ? '...sending' : 'Submit →'}
+          {submitting ? '...sealing' : 'Submit →'}
         </button>
+
+        <p className="font-mono mt-1 text-center text-[10px] tracking-[0.1em] text-cream-dim">
+          ◆ shows up on the wall instantly
+        </p>
       </form>
     </main>
   );
@@ -231,7 +254,7 @@ function Field({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between">
-        <label className="font-mono text-sm uppercase tracking-wide text-pink">
+        <label className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-pink">
           {label}
         </label>
         {maxLength && (
@@ -251,7 +274,7 @@ function Field({
         autoFocus={autoFocus}
         placeholder={placeholder}
         rows={multiline ? 3 : undefined}
-        className="font-mono w-full resize-none border border-border-faint bg-ink-soft px-3 py-2 text-base text-cream placeholder:text-grey focus:border-pink focus:outline-none"
+        className="font-mono w-full resize-none border border-border-faint bg-ink-soft px-3 py-2.5 text-[15px] text-cream outline-none placeholder:text-grey focus:border-pink focus:bg-[#1a1418]"
       />
     </div>
   );

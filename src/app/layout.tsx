@@ -1,23 +1,29 @@
 import type { Metadata } from 'next';
-import { Archivo_Black, Space_Mono } from 'next/font/google';
+import { Anton, JetBrains_Mono, Noto_Sans_JP } from 'next/font/google';
 import './globals.css';
 
-const archivoBlack = Archivo_Black({
+const anton = Anton({
   variable: '--font-display',
   subsets: ['latin'],
   weight: '400',
 });
 
-const spaceMono = Space_Mono({
+const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono-stack',
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight: ['400', '500', '700', '800'],
+});
+
+const notoSansJP = Noto_Sans_JP({
+  variable: '--font-jp',
+  subsets: ['latin'],
+  weight: ['500', '700'],
 });
 
 export const metadata: Metadata = {
-  title: 'AI MEETS HER — Digital Name Card',
+  title: 'AI MEETS HER · activity card',
   description:
-    'Vibe Coding Day To Visualize Your Dream. Find your collab match at AI MEETS HER.',
+    'Vibe Coding Day To Visualize Your Dream. Drop your card and find your match.',
 };
 
 export default function RootLayout({
@@ -28,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${archivoBlack.variable} ${spaceMono.variable} antialiased`}
+      className={`${anton.variable} ${jetbrainsMono.variable} ${notoSansJP.variable} antialiased`}
     >
       <body className="min-h-screen">{children}</body>
     </html>
