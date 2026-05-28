@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
-import { Anton, JetBrains_Mono } from 'next/font/google';
+import { Archivo_Black, Space_Mono } from 'next/font/google';
 import './globals.css';
 
-const anton = Anton({
-  variable: '--font-anton',
+const archivoBlack = Archivo_Black({
+  variable: '--font-display',
   subsets: ['latin'],
   weight: '400',
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-jetbrains',
+const spaceMono = Space_Mono({
+  variable: '--font-mono-stack',
   subsets: ['latin'],
-  weight: ['400', '500', '700'],
+  weight: ['400', '700'],
 });
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${jetbrainsMono.variable} antialiased`}
+      className={`${archivoBlack.variable} ${spaceMono.variable} antialiased`}
     >
       <body className="min-h-screen">{children}</body>
     </html>

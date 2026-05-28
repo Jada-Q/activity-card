@@ -11,12 +11,8 @@ export default function LandingPage() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col px-5 py-8 sm:max-w-lg sm:px-8 sm:py-12">
       {/* Hero block — mirrors the poster framing */}
       <div className="pink-frame relative flex flex-col items-center gap-5 px-5 py-8 sm:gap-7 sm:px-8 sm:py-10">
-        <h1 className="text-pink-grain font-display text-center text-[44px] leading-[0.92] tracking-tight sm:text-6xl">
-          AI
-          <br />
-          MEETS
-          <br />
-          HER
+        <h1 className="text-pink-grain font-display text-center text-[42px] leading-[0.95] tracking-tight whitespace-nowrap sm:text-6xl">
+          AI MEETS HER
         </h1>
 
         <p className="font-mono text-center text-base font-bold leading-tight tracking-tight text-cream sm:text-lg">

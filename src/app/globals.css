@@ -4,17 +4,17 @@
   --color-ink: #0a0a0a;
   --color-ink-soft: #141414;
   --color-ink-card: #181818;
-  --color-pink: #e47ba8;
-  --color-pink-soft: #c46690;
-  --color-pink-dim: #7a3e58;
+  --color-pink: #d87b9f;
+  --color-pink-soft: #c46d8e;
+  --color-pink-dim: #7a4258;
   --color-cream: #f2eae5;
   --color-cream-dim: #b8aea8;
   --color-grey: #6b6b6b;
   --color-grey-dim: #3a3a3a;
   --color-border-faint: #2a2a2a;
 
-  --font-display: var(--font-anton), 'Arial Narrow', sans-serif;
-  --font-mono: var(--font-jetbrains), 'Menlo', monospace;
+  --font-display-stack: var(--font-display), 'Impact', 'Arial Black', sans-serif;
+  --font-mono: var(--font-mono-stack), 'Menlo', monospace;
 }
 
 :root {
@@ -31,23 +31,24 @@ body {
 }
 
 /* Grain noise overlay — applied to body via ::before for perf isolation.
-   SVG fractal noise rendered once by browser then composited. */
+   SVG fractal noise rendered once by browser then composited.
+   Heavier opacity for letterpress/zine feel matching poster. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 100;
-  opacity: 0.18;
+  opacity: 0.32;
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   background-size: 240px 240px;
 }
 
 /* Reduce motion + grain for accessibility */
 @media (prefers-reduced-motion: reduce) {
   body::before {
-    opacity: 0.08;
+    opacity: 0.16;
   }
 }
 
@@ -75,12 +76,12 @@ body::before {
 
 /* Display heading utility */
 .font-display {
-  font-family: var(--font-display);
-  letter-spacing: 0.02em;
+  font-family: var(--font-display-stack);
+  letter-spacing: -0.01em;
   text-transform: uppercase;
 }
 
-/* Pink glow grain box — for retro framed sections like the poster */
+/* Pink frame with inner grain — heavier opacity for poster letterpress feel */
 .pink-frame {
   border: 1.5px solid var(--color-pink);
   position: relative;
@@ -90,10 +91,10 @@ body::before {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.89  0 0 0 0 0.48  0 0 0 0 0.66  0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.48  0 0 0 0 0.62  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   background-size: 160px 160px;
   mix-blend-mode: screen;
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 /* Pink text with grain dust */
@@ -101,7 +102,7 @@ body::before {
   color: var(--color-pink);
   text-shadow:
     0 0 1px var(--color-pink-soft),
-    0 0 8px rgba(228, 123, 168, 0.3);
+    0 0 8px rgba(216, 123, 159, 0.35);
 }
 
 /* Hairline divider used in the poster */
