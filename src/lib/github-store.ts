@@ -33,6 +33,18 @@ export type Person = {
   lookingFor: string;
   social: string;
   tags: string[];
+  /**
+   * Single-sentence self-description used by the AI Vibe Match feature
+   * (post-v3). Older cards predating the redesign won't have this field
+   * (we display bio + lookingFor for those instead).
+   */
+  vibe?: string;
+  /**
+   * 256-dim Gemini embedding of `vibe`. Present only when GEMINI_API_KEY
+   * was configured at write time AND the API call succeeded. Cards without
+   * this field are skipped on /match but still show on /people.
+   */
+  embedding?: number[];
   createdAt: string;
 };
 
@@ -42,6 +54,8 @@ export type CreatePersonInput = {
   lookingFor: string;
   social: string;
   tags: string[];
+  vibe?: string;
+  embedding?: number[];
 };
 
 type GhIssue = {
@@ -58,6 +72,8 @@ type StoredCard = {
   lookingFor?: string;
   social?: string;
   tags?: string[];
+  vibe?: string;
+  embedding?: number[];
 };
 
 function issueToPerson(issue: GhIssue): Person | null {
@@ -75,6 +91,8 @@ function issueToPerson(issue: GhIssue): Person | null {
     lookingFor: parsed.lookingFor ?? '',
     social: parsed.social ?? '',
     tags: Array.isArray(parsed.tags) ? parsed.tags : [],
+    vibe: typeof parsed.vibe === 'string' ? parsed.vibe : undefined,
+    embedding: Array.isArray(parsed.embedding) ? parsed.embedding : undefined,
     createdAt: issue.created_at,
   };
 }
@@ -124,6 +142,8 @@ export async function createPerson(input: CreatePersonInput): Promise<Person> {
     lookingFor: input.lookingFor,
     social: input.social,
     tags: input.tags,
+    vibe: input.vibe,
+    embedding: input.embedding,
   });
   const issue = await gh<GhIssue>(`/repos/${OWNER}/${REPO}/issues`, {
     method: 'POST',

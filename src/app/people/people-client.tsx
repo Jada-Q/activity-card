@@ -235,19 +235,26 @@ function PersonCard({
         </div>
       )}
 
-      {person.bio && (
+      {person.vibe ? (
         <p className="font-mono m-0 text-[13px] leading-snug text-cream">
-          {person.bio}
+          {person.vibe}
         </p>
-      )}
-
-      {person.lookingFor && (
-        <div className="mt-0.5 border-l-2 border-pink-dim pl-3">
-          <Eyebrow>LOOKING FOR</Eyebrow>
-          <p className="font-mono mt-1 text-[13px] leading-snug text-cream">
-            {person.lookingFor}
-          </p>
-        </div>
+      ) : (
+        <>
+          {person.bio && (
+            <p className="font-mono m-0 text-[13px] leading-snug text-cream">
+              {person.bio}
+            </p>
+          )}
+          {person.lookingFor && (
+            <div className="mt-0.5 border-l-2 border-pink-dim pl-3">
+              <Eyebrow>LOOKING FOR</Eyebrow>
+              <p className="font-mono mt-1 text-[13px] leading-snug text-cream">
+                {person.lookingFor}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {person.tags.length > 0 && (
@@ -341,22 +348,32 @@ function FocusModal({
 
         <div className="hairline my-4" />
 
-        {person.bio && (
+        {person.vibe ? (
           <div className="mb-4">
-            <Eyebrow>BIO</Eyebrow>
+            <Eyebrow>THEIR VIBE</Eyebrow>
             <p className="font-mono mt-1.5 text-sm leading-[1.5] text-cream">
-              {person.bio}
+              {person.vibe}
             </p>
           </div>
-        )}
-
-        {person.lookingFor && (
-          <div className="mb-4 border-l-2 border-pink pl-3">
-            <Eyebrow color="var(--color-pink)">LOOKING FOR</Eyebrow>
-            <p className="font-mono mt-1.5 text-sm leading-[1.5] text-cream">
-              {person.lookingFor}
-            </p>
-          </div>
+        ) : (
+          <>
+            {person.bio && (
+              <div className="mb-4">
+                <Eyebrow>BIO</Eyebrow>
+                <p className="font-mono mt-1.5 text-sm leading-[1.5] text-cream">
+                  {person.bio}
+                </p>
+              </div>
+            )}
+            {person.lookingFor && (
+              <div className="mb-4 border-l-2 border-pink pl-3">
+                <Eyebrow color="var(--color-pink)">LOOKING FOR</Eyebrow>
+                <p className="font-mono mt-1.5 text-sm leading-[1.5] text-cream">
+                  {person.lookingFor}
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {person.tags.length > 0 && (
