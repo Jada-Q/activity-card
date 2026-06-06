@@ -154,8 +154,19 @@ const ZODIAC: { key: string; label: string; glyph: string; dates: string; theme:
   { key: 'pisces', label: 'Pisces', glyph: '♓', dates: 'Feb 19 – Mar 20', theme: 'violet' },
 ];
 
+// MBTI is a text badge (not a color) so it stacks with the zodiac color/glyph.
+// Pop-culture personality framework — fun, not science; we never assert traits.
+const MBTI = [
+  'INTJ', 'INTP', 'ENTJ', 'ENTP',
+  'INFJ', 'INFP', 'ENFJ', 'ENFP',
+  'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
+  'ISTP', 'ISFP', 'ESTP', 'ESFP',
+];
+const MBTI_TEST_URL = 'https://www.16personalities.com/free-personality-test';
+
 function NameCard({ person }: { person: Person }) {
   const [signKey, setSignKey] = useState('');
+  const [mbtiKey, setMbtiKey] = useState('');
   const [themeKey, setThemeKey] = useState('blush');
   const [panelOpen, setPanelOpen] = useState(false);
 
@@ -163,7 +174,11 @@ function NameCard({ person }: { person: Person }) {
     try {
       const raw = localStorage.getItem(STYLE_KEY);
       if (raw) {
-        const s = JSON.parse(raw) as { sign?: string; theme?: string };
+        const s = JSON.parse(raw) as {
+          sign?: string;
+          mbti?: string;
+          theme?: string;
+        };
         const z = s.sign ? ZODIAC.find((x) => x.key === s.sign) : null;
         if (z) {
           setSignKey(z.key);
@@ -172,20 +187,34 @@ function NameCard({ person }: { person: Person }) {
           // legacy cards saved a bare theme before zodiac existed
           setThemeKey(s.theme);
         }
+        if (s.mbti && MBTI.includes(s.mbti)) setMbtiKey(s.mbti);
       }
     } catch {
       /* storage blocked */
     }
   }, []);
 
-  function pick(z: { key: string; theme: string }) {
-    setSignKey(z.key);
-    setThemeKey(z.theme);
+  function persist(next: { sign?: string; mbti?: string }) {
     try {
-      localStorage.setItem(STYLE_KEY, JSON.stringify({ sign: z.key }));
+      localStorage.setItem(
+        STYLE_KEY,
+        JSON.stringify({ sign: next.sign || undefined, mbti: next.mbti || undefined }),
+      );
     } catch {
       /* non-blocking */
     }
+  }
+
+  function pickSign(z: { key: string; theme: string }) {
+    setSignKey(z.key);
+    setThemeKey(z.theme);
+    persist({ sign: z.key, mbti: mbtiKey });
+  }
+
+  function pickMbti(code: string) {
+    const next = code === mbtiKey ? '' : code; // tap again to clear
+    setMbtiKey(next);
+    persist({ sign: signKey, mbti: next });
   }
 
   const theme = THEMES.find((x) => x.key === themeKey) ?? THEMES[0];
@@ -226,11 +255,20 @@ function NameCard({ person }: { person: Person }) {
                 {person.social}
               </p>
             )}
-            {sign && (
-              <p className="font-mono mt-2 text-[13px] font-bold tracking-[0.25em] text-pink">
-                <span className="text-[16px]">{sign.glyph}</span>{' '}
-                {sign.label.toUpperCase()}
-              </p>
+            {(sign || mbtiKey) && (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 landscape:justify-start">
+                {sign && (
+                  <span className="font-mono text-[13px] font-bold tracking-[0.25em] text-pink">
+                    <span className="text-[16px]">{sign.glyph}</span>{' '}
+                    {sign.label.toUpperCase()}
+                  </span>
+                )}
+                {mbtiKey && (
+                  <span className="font-mono text-[13px] font-bold tracking-[0.2em] text-pink">
+                    {mbtiKey}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -291,7 +329,7 @@ function NameCard({ person }: { person: Person }) {
                       type="button"
                       aria-label={`${z.label} ${z.dates}`}
                       aria-pressed={on}
-                      onClick={() => pick(z)}
+                      onClick={() => pickSign(z)}
                       className={`flex items-center gap-2 border px-2 py-1.5 text-left transition-colors ${on ? 'border-pink bg-pink/10' : 'border-border-faint hover:border-pink'}`}
                     >
                       <span
@@ -312,6 +350,41 @@ function NameCard({ person }: { person: Person }) {
                   );
                 })}
               </div>
+            </div>
+
+            {/* MBTI — a text badge; stacks with the zodiac */}
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cream-dim">
+                Personality (MBTI)
+              </span>
+              <div className="grid w-full grid-cols-4 gap-1.5">
+                {MBTI.map((code) => {
+                  const on = code === mbtiKey;
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => pickMbti(code)}
+                      className={`font-mono border py-1.5 text-[11px] font-bold tracking-[0.05em] transition-colors ${
+                        on
+                          ? 'border-pink bg-pink text-ink'
+                          : 'border-border-faint text-cream hover:border-pink'
+                      }`}
+                    >
+                      {code}
+                    </button>
+                  );
+                })}
+              </div>
+              <a
+                href={MBTI_TEST_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono mt-0.5 text-[11px] tracking-[0.05em] text-pink-soft underline decoration-pink-dim underline-offset-2 transition-colors hover:text-pink"
+              >
+                Don&apos;t know yours? Take the 2-min test ↗
+              </a>
             </div>
           </div>
         )}
