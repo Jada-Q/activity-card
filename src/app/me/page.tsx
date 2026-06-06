@@ -174,8 +174,9 @@ function NameCard({ person }: { person: Person }) {
         className="pink-frame flicker-in flex w-full max-w-[760px] flex-col gap-4 bg-ink-card px-6 py-7 sm:px-10 sm:py-9 landscape:flex-row landscape:items-center landscape:gap-8"
         style={{ boxShadow: '10px 10px 0 0 var(--color-pink-deep)' }}
       >
-        {/* Left / top: identity */}
-        <div className="flex shrink-0 items-center gap-4 landscape:flex-col landscape:items-start landscape:gap-5">
+        {/* Left / top: identity — centered stack in portrait, left-aligned in
+            the landscape hand-over view */}
+        <div className="flex shrink-0 flex-col items-center gap-3 text-center landscape:items-start landscape:gap-5 landscape:text-left">
           <SeedAvatar seed={person.name} size={96} />
           <div className="min-w-0">
             <Eyebrow>AI MEETS HER · TOKYO</Eyebrow>
@@ -241,7 +242,7 @@ function NameCard({ person }: { person: Person }) {
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cream-dim">
                 Color
               </span>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="grid w-max grid-cols-6 gap-2.5">
                 {THEMES.map((th) => {
                   const on = th.key === themeKey;
                   return (
