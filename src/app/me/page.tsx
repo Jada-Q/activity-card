@@ -127,44 +127,31 @@ function t(pink: string, bright: string, soft: string, dim: string, deep: string
   };
 }
 
-// Fonts already loaded by the app (Anton / JetBrains Mono / Noto Sans JP) plus a
-// system serif — no extra web-font payload.
-const FONTS: { key: string; label: string; family: string }[] = [
-  { key: 'poster', label: 'Poster', family: 'var(--font-display-stack)' },
-  { key: 'mono', label: 'Mono', family: 'var(--font-mono)' },
-  { key: 'serif', label: 'Serif', family: "Georgia, 'Times New Roman', serif" },
-  { key: 'jp', label: '日本語', family: 'var(--font-jp-stack)' },
-];
-
 function NameCard({ person }: { person: Person }) {
   const [themeKey, setThemeKey] = useState('blush');
-  const [fontKey, setFontKey] = useState('poster');
   const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STYLE_KEY);
       if (raw) {
-        const s = JSON.parse(raw) as { theme?: string; font?: string };
+        const s = JSON.parse(raw) as { theme?: string };
         if (s.theme && THEMES.some((x) => x.key === s.theme)) setThemeKey(s.theme);
-        if (s.font && FONTS.some((x) => x.key === s.font)) setFontKey(s.font);
       }
     } catch {
       /* storage blocked */
     }
   }, []);
 
-  function persist(theme: string, font: string) {
+  function persist(theme: string) {
     try {
-      localStorage.setItem(STYLE_KEY, JSON.stringify({ theme, font }));
+      localStorage.setItem(STYLE_KEY, JSON.stringify({ theme }));
     } catch {
       /* non-blocking */
     }
   }
 
   const theme = THEMES.find((x) => x.key === themeKey) ?? THEMES[0];
-  const nameFamily =
-    FONTS.find((x) => x.key === fontKey)?.family ?? FONTS[0].family;
 
   return (
     <main
@@ -185,11 +172,13 @@ function NameCard({ person }: { person: Person }) {
           <SeedAvatar seed={person.name} size={96} />
           <div className="min-w-0">
             <Eyebrow>AI MEETS HER · TOKYO</Eyebrow>
-            <h1
-              className="text-pink-grain font-display m-0 mt-1.5 break-words text-[40px] leading-[0.95] sm:text-[52px]"
-              style={{ fontFamily: nameFamily }}
-            >
-              {person.name || '—'}
+            {/* Name echoes the poster hero: Anton + the same SVG grain
+                knocked out of the letters (via Letterpress), tinted by the
+                active theme's --color-pink. */}
+            <h1 className="m-0 mt-1.5">
+              <Letterpress className="break-words text-[40px] leading-[0.95] sm:text-[52px]">
+                {person.name || '—'}
+              </Letterpress>
             </h1>
             {person.social && (
               <p className="font-mono mt-2 text-sm font-medium text-pink-soft break-all">
@@ -257,41 +246,11 @@ function NameCard({ person }: { person: Person }) {
                       aria-pressed={on}
                       onClick={() => {
                         setThemeKey(th.key);
-                        persist(th.key, fontKey);
+                        persist(th.key);
                       }}
                       className={`h-7 w-7 rounded-full border-2 transition-transform ${on ? 'scale-110 border-cream' : 'border-transparent hover:scale-105'}`}
                       style={{ background: th.vars['--color-pink'] }}
                     />
-                  );
-                })}
-              </div>
-            </div>
-            {/* Font */}
-            <div className="flex flex-col gap-2">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cream-dim">
-                Name font
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {FONTS.map((f) => {
-                  const on = f.key === fontKey;
-                  return (
-                    <button
-                      key={f.key}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => {
-                        setFontKey(f.key);
-                        persist(themeKey, f.key);
-                      }}
-                      style={{ fontFamily: f.family }}
-                      className={`border px-3 py-1.5 text-[14px] transition-colors ${
-                        on
-                          ? 'border-pink bg-pink text-ink'
-                          : 'border-border-faint text-cream hover:border-pink'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
                   );
                 })}
               </div>
