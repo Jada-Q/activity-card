@@ -34,7 +34,7 @@ export default async function MatchPage() {
       <div className="mb-[22px]">
         <Eyebrow>AI · TUNED FOR YOU</Eyebrow>
         <h1 className="font-display mb-1 mt-2 text-[46px] leading-[0.95]">
-          <Letterpress>Vibe Twins</Letterpress>
+          <Letterpress>Teammates</Letterpress>
         </h1>
         <p className="font-mono mt-1.5 text-xs text-cream-dim">
           ◆ {matchable.length} card{matchable.length === 1 ? '' : 's'} in the

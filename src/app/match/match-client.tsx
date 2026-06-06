@@ -8,6 +8,8 @@ import type { Person } from '@/lib/github-store';
 const MY_CARD_ID_KEY = 'ac:my-card-id';
 const TOP_N = 3;
 
+type Mode = 'similar' | 'complement';
+
 function cosine(a: number[], b: number[]): number {
   if (a.length !== b.length) return 0;
   let dot = 0;
@@ -24,6 +26,18 @@ function cosine(a: number[], b: number[]): number {
 
 type Scored = { person: Person; score: number };
 
+/** Rank others by cosine of `query` against each candidate's skills embedding. */
+function rank(query: number[], me: Person, people: Person[]): Scored[] {
+  const scored = people
+    .filter((p) => p.id !== me.id && p.embedding)
+    .map((p) => ({
+      person: p,
+      score: cosine(query, p.embedding as number[]),
+    }));
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, TOP_N);
+}
+
 export function MatchClient({
   people,
   totalCount,
@@ -33,6 +47,7 @@ export function MatchClient({
 }) {
   const [myCardId, setMyCardId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [mode, setMode] = useState<Mode>('similar');
 
   useEffect(() => {
     try {
@@ -48,19 +63,16 @@ export function MatchClient({
     [people, myCardId],
   );
 
-  const topMatches = useMemo<Scored[]>(() => {
-    if (!me || !me.embedding) return [];
-    const others = people.filter((p) => p.id !== me.id && p.embedding);
-    const scored = others.map((p) => ({
-      person: p,
-      score: cosine(me.embedding as number[], p.embedding as number[]),
-    }));
-    scored.sort((a, b) => b.score - a.score);
-    return scored.slice(0, TOP_N);
-  }, [people, me]);
+  // Similar: my skills × their skills. Complementary: what I want × their skills.
+  const similar = useMemo<Scored[]>(
+    () => (me?.embedding ? rank(me.embedding, me, people) : []),
+    [people, me],
+  );
+  const complement = useMemo<Scored[]>(
+    () => (me?.wantEmbedding ? rank(me.wantEmbedding, me, people) : []),
+    [people, me],
+  );
 
-  // Not hydrated yet — server-render a placeholder consistent with the
-  // post-hydration "no card" state so SSR + client agree.
   if (!hydrated) {
     return (
       <div className="pink-frame px-5 py-10 text-center">
@@ -75,10 +87,10 @@ export function MatchClient({
         <div className="pink-frame px-5 py-10 text-center">
           <Eyebrow>NO CARD YET</Eyebrow>
           <p className="font-display mt-3 text-[26px] text-pink">
-            Drop a vibe first
+            Make your card first
           </p>
           <p className="font-mono mt-2 text-xs text-cream-dim">
-            AI needs your sentence to find your matches
+            AI needs your skills to find teammates
           </p>
         </div>
         <div className="mt-7 flex flex-col gap-2.5">
@@ -86,7 +98,7 @@ export function MatchClient({
             href="/create"
             className="font-display block w-full border-2 border-pink bg-pink py-[14px] text-center text-2xl uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright active:bg-pink-soft"
           >
-            Drop my vibe →
+            Make my card →
           </Link>
           <Link
             href="/people"
@@ -124,57 +136,82 @@ export function MatchClient({
     );
   }
 
-  if (topMatches.length === 0) {
-    return (
-      <>
-        <div className="pink-frame px-5 py-10 text-center">
-          <Eyebrow>YOU&apos;RE THE FIRST</Eyebrow>
-          <p className="font-display mt-3 text-[26px] text-pink">
-            No one to match yet
-          </p>
-          <p className="font-mono mt-2 text-xs leading-snug text-cream-dim">
-            refresh in a bit — others are dropping their vibes
-          </p>
-        </div>
-        <div className="mt-7 flex flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={() => location.reload()}
-            className="font-display block w-full border-2 border-pink bg-pink py-[14px] text-center text-2xl uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright"
-          >
-            ↻ Refresh
-          </button>
-          <Link
-            href="/people"
-            className="font-mono block w-full border border-border-faint py-3 text-center text-xs tracking-[0.1em] text-cream-dim transition-colors hover:border-pink hover:text-pink"
-          >
-            ← see the full wall ({totalCount})
-          </Link>
-        </div>
-      </>
-    );
-  }
+  const list = mode === 'similar' ? similar : complement;
+  const myContext = mode === 'similar' ? me.vibe : me.lookingFor;
 
   return (
     <div className="flex flex-col gap-5">
-      {/* My vibe — context for the user */}
+      {/* Mode toggle */}
+      <div className="grid grid-cols-2 gap-2">
+        <ModeTab active={mode === 'similar'} onClick={() => setMode('similar')}>
+          Similar
+        </ModeTab>
+        <ModeTab
+          active={mode === 'complement'}
+          onClick={() => setMode('complement')}
+        >
+          Complementary
+        </ModeTab>
+      </div>
+
+      {/* Context line */}
       <div className="border-l-2 border-pink-dim pl-3">
-        <Eyebrow>YOU TYPED</Eyebrow>
+        <Eyebrow>
+          {mode === 'similar' ? 'MATCHING YOUR SKILLS' : 'MATCHING WHAT YOU WANT'}
+        </Eyebrow>
         <p className="font-mono mt-1.5 text-[13px] leading-snug text-cream">
-          {me.vibe || '—'}
+          {myContext || '—'}
         </p>
       </div>
 
       <div className="hairline" />
 
-      {topMatches.map(({ person, score }, i) => (
-        <MatchCard
-          key={person.id}
-          person={person}
-          score={score}
-          rank={i + 1}
-        />
-      ))}
+      {/* Complementary needs a "teammate you want" sentence */}
+      {mode === 'complement' && !me.wantEmbedding ? (
+        <div className="pink-frame px-5 py-9 text-center">
+          <Eyebrow>UNLOCK COMPLEMENTARY</Eyebrow>
+          <p className="font-display mt-3 text-[24px] text-pink">
+            Add who you&apos;re looking for
+          </p>
+          <p className="font-mono mt-2 text-xs leading-snug text-cream-dim">
+            your card has no &ldquo;teammate you want&rdquo; yet —<br />
+            make a new card with it to match by complement
+          </p>
+          <Link
+            href="/create"
+            className="font-display mt-5 inline-block border-2 border-pink bg-pink px-6 py-2.5 text-base uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright"
+          >
+            Update my card →
+          </Link>
+        </div>
+      ) : list.length === 0 ? (
+        <div className="pink-frame px-5 py-10 text-center">
+          <Eyebrow>YOU&apos;RE EARLY</Eyebrow>
+          <p className="font-display mt-3 text-[26px] text-pink">
+            No one to match yet
+          </p>
+          <p className="font-mono mt-2 text-xs leading-snug text-cream-dim">
+            refresh in a bit — others are dropping their cards
+          </p>
+          <button
+            type="button"
+            onClick={() => location.reload()}
+            className="font-display mt-5 inline-block border-2 border-pink bg-pink px-6 py-2.5 text-base uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright"
+          >
+            ↻ Refresh
+          </button>
+        </div>
+      ) : (
+        list.map(({ person, score }, i) => (
+          <MatchCard
+            key={person.id}
+            person={person}
+            score={score}
+            rank={i + 1}
+            mode={mode}
+          />
+        ))
+      )}
 
       <Link
         href="/people"
@@ -186,14 +223,40 @@ export function MatchClient({
   );
 }
 
+function ModeTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`font-mono border py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors ${
+        active
+          ? 'border-pink bg-pink text-ink'
+          : 'border-border-faint text-cream-dim hover:border-pink hover:text-pink'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 function MatchCard({
   person,
   score,
   rank,
+  mode,
 }: {
   person: Person;
   score: number;
   rank: number;
+  mode: Mode;
 }) {
   const pct = Math.round(score * 100);
   return (
@@ -218,12 +281,15 @@ function MatchCard({
             </span>
             <SimilarityBar percent={pct} />
           </div>
+          <p className="font-mono mt-1 text-[9px] uppercase tracking-[0.15em] text-cream-dim">
+            {mode === 'similar' ? 'shared vibe' : 'they bring what you want'}
+          </p>
         </div>
       </div>
 
       {person.vibe && (
         <div className="border-l-2 border-pink-dim pl-3">
-          <Eyebrow>THEIR VIBE</Eyebrow>
+          <Eyebrow>WHAT THEY BRING</Eyebrow>
           <p className="font-mono mt-1.5 text-[13px] leading-snug text-cream">
             {person.vibe}
           </p>
@@ -232,7 +298,7 @@ function MatchCard({
 
       {person.social && (
         <div className="mt-1 flex items-center justify-between gap-3">
-          <span className="font-mono text-[12px] font-medium text-pink-soft">
+          <span className="font-mono text-[12px] font-medium text-pink-soft break-all">
             {person.social}
           </span>
           <button
@@ -242,7 +308,7 @@ function MatchCard({
                 navigator.clipboard.writeText(person.social).catch(() => {});
               }
             }}
-            className="font-mono border border-pink px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-pink transition-colors hover:bg-pink hover:text-ink"
+            className="font-mono shrink-0 border border-pink px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-pink transition-colors hover:bg-pink hover:text-ink"
           >
             Copy handle
           </button>
