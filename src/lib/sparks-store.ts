@@ -62,8 +62,16 @@ function parse(issue: GhIssue): Spark | null {
   return null;
 }
 
+// Short cache to protect the shared GitHub rate budget when many people poll
+// /sparks. Invalidated on every new spark so your own action is reflected.
+let sparksCache: { at: number; data: Spark[] } | null = null;
+const SPARKS_TTL_MS = 10_000;
+
 /** All spark edges. Paginated; event scale is small (cap ~1000). */
 async function listSparks(): Promise<Spark[]> {
+  if (sparksCache && Date.now() - sparksCache.at < SPARKS_TTL_MS) {
+    return sparksCache.data;
+  }
   const out: Spark[] = [];
   for (let page = 1; page <= 10; page++) {
     const issues = await gh<GhIssue[]>(`/repos/${OWNER}/${REPO}/issues`, {
@@ -80,6 +88,7 @@ async function listSparks(): Promise<Spark[]> {
     }
     if (issues.length < 100) break;
   }
+  sparksCache = { at: Date.now(), data: out };
   return out;
 }
 
@@ -103,6 +112,7 @@ export async function createSpark(from: string, to: string): Promise<{ created: 
         labels: [SPARK_LABEL],
       }),
     });
+    sparksCache = null; // reflect this new spark on the next read
   }
   return { created: !exists, mutual };
 }

@@ -131,7 +131,20 @@ async function gh<T>(
   return (await res.json()) as T;
 }
 
+// Short in-memory cache so a crowded room (120 people all viewing the wall /
+// match / landing) doesn't hammer GitHub's 5,000-req/hr shared token budget.
+// Per warm serverless instance; TTL keeps "X in the room" fresh enough.
+let peopleCache: { at: number; data: Person[] } | null = null;
+const PEOPLE_TTL_MS = 15_000;
+
+export function invalidatePeopleCache() {
+  peopleCache = null;
+}
+
 export async function listPeople(): Promise<Person[]> {
+  if (peopleCache && Date.now() - peopleCache.at < PEOPLE_TTL_MS) {
+    return peopleCache.data;
+  }
   const issues = await gh<GhIssue[]>(`/repos/${OWNER}/${REPO}/issues`, {
     searchParams: {
       labels: CARD_LABEL,
@@ -141,10 +154,12 @@ export async function listPeople(): Promise<Person[]> {
       direction: 'desc',
     },
   });
-  return issues
+  const data = issues
     .filter((i) => !i.pull_request)
     .map(issueToPerson)
     .filter((p): p is Person => p !== null);
+  peopleCache = { at: Date.now(), data };
+  return data;
 }
 
 /**
@@ -185,5 +200,6 @@ export async function createPerson(input: CreatePersonInput): Promise<Person> {
   });
   const person = issueToPerson(issue);
   if (!person) throw new Error('Failed to parse created issue back into Person');
+  invalidatePeopleCache(); // so the new card shows on the wall ASAP
   return person;
 }

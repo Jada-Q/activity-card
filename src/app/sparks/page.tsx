@@ -39,11 +39,20 @@ export default function SparksPage() {
       }
     };
     load();
-    // Poll so a fresh mutual match shows up within a few seconds.
-    const timer = setInterval(load, 5000);
+    // Poll for new mutual matches — but only while the tab is visible, and at a
+    // gentle interval, to protect the shared GitHub rate budget at event scale.
+    const tick = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    const timer = setInterval(tick, 30000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') load(); // refresh on return
+    };
+    document.addEventListener('visibilitychange', onVis);
     return () => {
       cancelled = true;
       clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVis);
     };
   }, []);
 
