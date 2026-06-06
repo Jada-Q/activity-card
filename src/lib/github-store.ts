@@ -135,7 +135,10 @@ async function gh<T>(
 // match / landing) doesn't hammer GitHub's 5,000-req/hr shared token budget.
 // Per warm serverless instance; TTL keeps "X in the room" fresh enough.
 let peopleCache: { at: number; data: Person[] } | null = null;
-const PEOPLE_TTL_MS = 15_000;
+// 8s balances rate protection (120 concurrent → ~1 GitHub call / 8s) against
+// new-card-on-wall latency (a cache populated during GitHub's index lag holds a
+// stale list for up to one TTL). The creator's own /me uses by-id (instant).
+const PEOPLE_TTL_MS = 8_000;
 
 export function invalidatePeopleCache() {
   peopleCache = null;
