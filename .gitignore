@@ -38,3 +38,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local dashboard marker (read by ~/scripts/project-index.sh — not app code)
+.live-url
