@@ -115,6 +115,13 @@ const THEMES: { key: string; label: string; vars: Record<string, string> }[] = [
   { key: 'violet', label: 'Violet', vars: t('#a98be4', '#b79cee', '#8e6dc4', '#523f7a', '#2f2447') },
   { key: 'lime', label: 'Lime', vars: t('#a8d65e', '#b9e074', '#8eba4e', '#5a7a2f', '#36481c') },
   { key: 'silver', label: 'Silver', vars: t('#c9c4cf', '#ddd9e1', '#9b96a3', '#5a5560', '#36333b') },
+  // Vibrant set — high-saturation pops that read bright on the dark card.
+  { key: 'coral', label: 'Coral', vars: t('#ff6b6b', '#ff8585', '#d65a5a', '#8a3a3a', '#4a1f1f') },
+  { key: 'azure', label: 'Azure', vars: t('#4d8dff', '#6ba0ff', '#4674cc', '#2a4a85', '#172a4d') },
+  { key: 'tangerine', label: 'Tangerine', vars: t('#ff9f43', '#ffb15f', '#d6853a', '#8a5526', '#4a2d14') },
+  { key: 'fuchsia', label: 'Fuchsia', vars: t('#e85ad6', '#f070e0', '#c24bb0', '#7a3070', '#42193c') },
+  { key: 'sunshine', label: 'Sunshine', vars: t('#ffd43b', '#ffe066', '#d6b234', '#8a721f', '#4a3d10') },
+  { key: 'spring', label: 'Spring', vars: t('#4ade80', '#6ee79b', '#3eb869', '#277a45', '#144a28') },
 ];
 
 function t(pink: string, bright: string, soft: string, dim: string, deep: string) {
