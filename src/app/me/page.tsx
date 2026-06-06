@@ -103,9 +103,74 @@ export default function MePage() {
   return <NameCard person={state.person} />;
 }
 
+const STYLE_KEY = 'ac:card-style';
+
+// Theme = a set of overrides for the pink accent CSS vars. Setting them on the
+// card wrapper cascades to everything that resolves var(--color-pink*) — the
+// grain name, frame border, divider, shadow — so the whole card re-themes.
+const THEMES: { key: string; label: string; vars: Record<string, string> }[] = [
+  { key: 'blush', label: 'Blush', vars: t('#e47ba8', '#ee8ab4', '#c46d8e', '#7a4258', '#4a2734') },
+  { key: 'cyan', label: 'Cyan', vars: t('#5ec8c8', '#74d6d6', '#4ea3a3', '#2f5e5e', '#1c3838') },
+  { key: 'amber', label: 'Amber', vars: t('#e0a44e', '#eeb968', '#c4894a', '#7a5a28', '#4a3618') },
+  { key: 'violet', label: 'Violet', vars: t('#a98be4', '#b79cee', '#8e6dc4', '#523f7a', '#2f2447') },
+  { key: 'lime', label: 'Lime', vars: t('#a8d65e', '#b9e074', '#8eba4e', '#5a7a2f', '#36481c') },
+  { key: 'silver', label: 'Silver', vars: t('#c9c4cf', '#ddd9e1', '#9b96a3', '#5a5560', '#36333b') },
+];
+
+function t(pink: string, bright: string, soft: string, dim: string, deep: string) {
+  return {
+    '--color-pink': pink,
+    '--color-pink-bright': bright,
+    '--color-pink-soft': soft,
+    '--color-pink-dim': dim,
+    '--color-pink-deep': deep,
+  };
+}
+
+// Fonts already loaded by the app (Anton / JetBrains Mono / Noto Sans JP) plus a
+// system serif — no extra web-font payload.
+const FONTS: { key: string; label: string; family: string }[] = [
+  { key: 'poster', label: 'Poster', family: 'var(--font-display-stack)' },
+  { key: 'mono', label: 'Mono', family: 'var(--font-mono)' },
+  { key: 'serif', label: 'Serif', family: "Georgia, 'Times New Roman', serif" },
+  { key: 'jp', label: '日本語', family: 'var(--font-jp-stack)' },
+];
+
 function NameCard({ person }: { person: Person }) {
+  const [themeKey, setThemeKey] = useState('blush');
+  const [fontKey, setFontKey] = useState('poster');
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STYLE_KEY);
+      if (raw) {
+        const s = JSON.parse(raw) as { theme?: string; font?: string };
+        if (s.theme && THEMES.some((x) => x.key === s.theme)) setThemeKey(s.theme);
+        if (s.font && FONTS.some((x) => x.key === s.font)) setFontKey(s.font);
+      }
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
+
+  function persist(theme: string, font: string) {
+    try {
+      localStorage.setItem(STYLE_KEY, JSON.stringify({ theme, font }));
+    } catch {
+      /* non-blocking */
+    }
+  }
+
+  const theme = THEMES.find((x) => x.key === themeKey) ?? THEMES[0];
+  const nameFamily =
+    FONTS.find((x) => x.key === fontKey)?.family ?? FONTS[0].family;
+
   return (
-    <main className="relative flex min-h-[100svh] w-full flex-col items-center justify-center overflow-hidden px-4 py-6">
+    <main
+      className="relative flex min-h-[100svh] w-full flex-col items-center justify-center overflow-hidden px-4 py-6"
+      style={theme.vars as React.CSSProperties}
+    >
       {/* Rotate hint — only shows in portrait */}
       <div className="font-mono pointer-events-none fixed left-1/2 top-3 z-10 -translate-x-1/2 whitespace-nowrap text-[10px] tracking-[0.3em] text-pink-soft landscape:hidden">
         ↻ ROTATE PHONE TO LANDSCAPE
@@ -120,7 +185,10 @@ function NameCard({ person }: { person: Person }) {
           <SeedAvatar seed={person.name} size={96} />
           <div className="min-w-0">
             <Eyebrow>AI MEETS HER · TOKYO</Eyebrow>
-            <h1 className="text-pink-grain font-display m-0 mt-1.5 break-words text-[40px] leading-[0.95] sm:text-[52px]">
+            <h1
+              className="text-pink-grain font-display m-0 mt-1.5 break-words text-[40px] leading-[0.95] sm:text-[52px]"
+              style={{ fontFamily: nameFamily }}
+            >
               {person.name || '—'}
             </h1>
             {person.social && (
@@ -158,8 +226,82 @@ function NameCard({ person }: { person: Person }) {
         </div>
       </div>
 
+      {/* Customize — portrait only, hidden when you flip to show the card */}
+      <div className="mt-5 w-full max-w-[760px] landscape:hidden">
+        <button
+          type="button"
+          onClick={() => setPanelOpen((v) => !v)}
+          aria-expanded={panelOpen}
+          className="font-mono flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-pink-soft transition-colors hover:text-pink"
+        >
+          <span>✎ Customize</span>
+          <span className={`transition-transform ${panelOpen ? 'rotate-180' : ''}`}>▾</span>
+        </button>
+
+        {panelOpen && (
+          <div className="mt-3 flex flex-col gap-4 border border-border-faint bg-ink-soft px-4 py-3.5">
+            {/* Color */}
+            <div className="flex flex-col gap-2">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cream-dim">
+                Color
+              </span>
+              <div className="flex flex-wrap gap-2.5">
+                {THEMES.map((th) => {
+                  const on = th.key === themeKey;
+                  return (
+                    <button
+                      key={th.key}
+                      type="button"
+                      title={th.label}
+                      aria-label={th.label}
+                      aria-pressed={on}
+                      onClick={() => {
+                        setThemeKey(th.key);
+                        persist(th.key, fontKey);
+                      }}
+                      className={`h-7 w-7 rounded-full border-2 transition-transform ${on ? 'scale-110 border-cream' : 'border-transparent hover:scale-105'}`}
+                      style={{ background: th.vars['--color-pink'] }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+            {/* Font */}
+            <div className="flex flex-col gap-2">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cream-dim">
+                Name font
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {FONTS.map((f) => {
+                  const on = f.key === fontKey;
+                  return (
+                    <button
+                      key={f.key}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => {
+                        setFontKey(f.key);
+                        persist(themeKey, f.key);
+                      }}
+                      style={{ fontFamily: f.family }}
+                      className={`border px-3 py-1.5 text-[14px] transition-colors ${
+                        on
+                          ? 'border-pink bg-pink text-ink'
+                          : 'border-border-faint text-cream hover:border-pink'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Bottom actions — hidden in landscape to keep the card clean for showing */}
-      <div className="mt-6 flex w-full max-w-[760px] gap-2 landscape:hidden">
+      <div className="mt-4 flex w-full max-w-[760px] gap-2 landscape:hidden">
         <Link
           href="/people"
           className="font-display flex-1 border-2 border-pink bg-transparent py-2.5 text-center text-base uppercase tracking-[0.04em] text-pink transition-colors hover:bg-pink hover:text-ink"
