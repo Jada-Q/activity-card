@@ -2,30 +2,36 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Eyebrow, Letterpress } from '@/components/ornaments';
 import attendees from '@/data/attendees.json';
 
-const MAX_VIBE = 280;
-const MAX_WANT = 280;
 const MAX_NAME = 60;
 const MAX_SOCIAL = 80;
+const MAX_OTHER = 120;
 const MY_CARD_ID_KEY = 'ac:my-card-id';
 
-const SKILL_PROMPTS = [
-  'frontend dev — three.js, live coding, design systems',
-  'PM who ships — agentic workflows, 0→1, user research',
-  'designer who codes — figma, react, brand identity',
-  'ML engineer — RAG, fine-tuning, eval pipelines',
-  'first-time founder — biz dev, fundraising, storytelling',
-];
-
-const WANT_PROMPTS = [
-  'a technical cofounder who can build the MVP',
-  'a designer to make it not look like a hackathon',
-  'someone who knows Japanese market + GTM',
-  'a data person to set up the eval loop',
-  'anyone who has shipped to the App Store',
+// Skill chips, ordered by how common the role is among AI MEETS HER attendees
+// (derived from the Luma registration occupations). Shared vocabulary for both
+// "what you bring" and "teammate you want" so complementary matching lines up.
+const SKILLS = [
+  'Design (UI/UX)',
+  'Research',
+  'Business / Strategy',
+  'Software Eng',
+  'Product / PM',
+  'AI / ML',
+  'Data',
+  'Frontend',
+  'Backend',
+  'Mobile',
+  'Marketing / Growth',
+  'Content / Writing',
+  'Sales / BD',
+  'Finance',
+  'Community',
+  'Game / Web3',
+  'Founder',
 ];
 
 type Attendee = { name: string; social: string; background: string };
@@ -34,17 +40,25 @@ function normalize(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+/** Join selected chips + free text into one sentence for display + embedding. */
+function compose(selected: string[], other: string): string {
+  const parts = [...selected];
+  const o = other.trim();
+  if (o) parts.push(o);
+  return parts.join(', ');
+}
+
 export default function CreatePage() {
   const router = useRouter();
   const [name, setName] = useState('');
-  const [vibe, setVibe] = useState('');
-  const [want, setWant] = useState('');
+  const [bring, setBring] = useState<string[]>([]);
+  const [bringOther, setBringOther] = useState('');
+  const [want, setWant] = useState<string[]>([]);
+  const [wantOther, setWantOther] = useState('');
   const [social, setSocial] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [skillIdx, setSkillIdx] = useState(0);
-  const [wantIdx, setWantIdx] = useState(0);
   const [prefilled, setPrefilled] = useState(false);
 
   // Bundled Luma lookup (name → {social, background}). No emails — see
@@ -59,19 +73,23 @@ export default function CreatePage() {
     setName(next);
     const hit = lookup.get(normalize(next));
     if (hit) {
-      // Only fill fields the user hasn't touched, so we never clobber edits.
       let filled = false;
       if (hit.social && !social) {
         setSocial(hit.social);
         filled = true;
       }
-      if (hit.background && !vibe) {
-        setVibe(hit.background);
+      // Drop their registered occupation into the "what you bring" free text so
+      // they can keep, tweak, or replace it with chips.
+      if (hit.background && !bringOther && bring.length === 0) {
+        setBringOther(hit.background);
         filled = true;
       }
       if (filled) setPrefilled(true);
     }
   }
+
+  const bringValue = compose(bring, bringOther);
+  const wantValue = compose(want, wantOther);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,8 +97,8 @@ export default function CreatePage() {
       setError('Name is required');
       return;
     }
-    if (!vibe.trim()) {
-      setError('Add what you bring so AI can match you');
+    if (!bringValue.trim()) {
+      setError('Pick at least one skill you bring (or add your own)');
       return;
     }
     setSubmitting(true);
@@ -91,8 +109,8 @@ export default function CreatePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          vibe: vibe.trim(),
-          lookingFor: want.trim(),
+          vibe: bringValue.slice(0, 280),
+          lookingFor: wantValue.slice(0, 280),
           social: social.trim(),
         }),
       });
@@ -111,8 +129,6 @@ export default function CreatePage() {
       } catch {
         /* localStorage may be blocked — non-blocking */
       }
-      // GitHub Issues has ~3-5s eventual consistency on labels filter; hold the
-      // success state, then send them to their card to show it off.
       setSuccess(true);
       setTimeout(() => router.push('/me'), 2800);
     } catch (err) {
@@ -149,9 +165,6 @@ export default function CreatePage() {
     );
   }
 
-  const skillHint = SKILL_PROMPTS[skillIdx];
-  const wantHint = WANT_PROMPTS[wantIdx];
-
   return (
     <main className="fade-up mx-auto max-w-[520px] px-5 pb-20 pt-6 sm:px-8 sm:pt-10">
       <header className="mb-[22px] flex items-center justify-between">
@@ -173,7 +186,7 @@ export default function CreatePage() {
         ◆ Your digital name card. Show it. Get matched.
       </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Field
           label="Name *"
           hint="how others should call you"
@@ -185,32 +198,39 @@ export default function CreatePage() {
         />
 
         {prefilled && (
-          <div className="font-mono -mt-2 border border-pink-dim bg-pink/5 px-3 py-1.5 text-[11px] text-pink-soft">
+          <div className="font-mono -mt-3 border border-pink-dim bg-pink/5 px-3 py-1.5 text-[11px] text-pink-soft">
             ◆ Prefilled from your event registration — edit anything below.
           </div>
         )}
 
-        <TextArea
+        <SkillDropdown
           label="What you bring *"
-          hint="your skills + background — the more specific, the better the match"
-          value={vibe}
-          onChange={setVibe}
-          maxLength={MAX_VIBE}
-          required
-          placeholder={`e.g. "${skillHint}"`}
-          counter
-          onRotate={() => setSkillIdx((i) => (i + 1) % SKILL_PROMPTS.length)}
+          hint="your skills + background — pick as many as fit"
+          placeholder="Select skills…"
+          selected={bring}
+          onToggle={(s) =>
+            setBring((cur) =>
+              cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s],
+            )
+          }
+          other={bringOther}
+          onOther={setBringOther}
+          otherPlaceholder="anything else you bring…"
         />
 
-        <TextArea
+        <SkillDropdown
           label="Teammate you want"
           hint="the skills you're looking for — powers complementary matching (optional)"
-          value={want}
-          onChange={setWant}
-          maxLength={MAX_WANT}
-          placeholder={`e.g. "${wantHint}"`}
-          counter
-          onRotate={() => setWantIdx((i) => (i + 1) % WANT_PROMPTS.length)}
+          placeholder="Select skills…"
+          selected={want}
+          onToggle={(s) =>
+            setWant((cur) =>
+              cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s],
+            )
+          }
+          other={wantOther}
+          onOther={setWantOther}
+          otherPlaceholder="anything else you want…"
         />
 
         <Field
@@ -230,13 +250,13 @@ export default function CreatePage() {
 
         <button
           type="submit"
-          disabled={submitting || !name.trim() || !vibe.trim()}
-          className="font-display mt-2 w-full border-2 border-pink bg-pink py-[14px] text-center text-2xl uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright active:bg-pink-soft disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={submitting || !name.trim() || !bringValue.trim()}
+          className="font-display mt-1 w-full border-2 border-pink bg-pink py-[14px] text-center text-2xl uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright active:bg-pink-soft disabled:cursor-not-allowed disabled:opacity-40"
         >
           {submitting ? '...minting' : 'Make my card →'}
         </button>
 
-        <p className="font-mono mt-1 text-center text-[10px] tracking-[0.1em] text-cream-dim">
+        <p className="font-mono -mt-2 text-center text-[10px] tracking-[0.1em] text-cream-dim">
           ◆ No login. Your card shows instantly + joins the room.
         </p>
       </form>
@@ -244,58 +264,158 @@ export default function CreatePage() {
   );
 }
 
-function TextArea({
+function SkillDropdown({
   label,
   hint,
-  value,
-  onChange,
-  maxLength,
-  required,
   placeholder,
-  counter,
-  onRotate,
+  selected,
+  onToggle,
+  other,
+  onOther,
+  otherPlaceholder,
 }: {
   label: string;
   hint: string;
-  value: string;
-  onChange: (v: string) => void;
-  maxLength: number;
-  required?: boolean;
-  placeholder?: string;
-  counter?: boolean;
-  onRotate?: () => void;
+  placeholder: string;
+  selected: string[];
+  onToggle: (skill: string) => void;
+  other: string;
+  onOther: (v: string) => void;
+  otherPlaceholder: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const [otherOn, setOtherOn] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const otherActive = otherOn || other.trim().length > 0;
+  const count = selected.length + (other.trim() ? 1 : 0);
+
+  // Close the menu when tapping outside it.
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between">
         <label className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-pink">
           {label}
         </label>
-        {counter && (
+        {count > 0 && (
           <span className="font-mono text-[10px] text-cream-dim">
-            {value.length}/{maxLength}
+            {count} selected
           </span>
         )}
       </div>
       <p className="font-mono text-[11px] text-cream-dim">{hint}</p>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        maxLength={maxLength}
-        required={required}
-        rows={3}
-        placeholder={placeholder}
-        className="font-mono w-full resize-none border border-border-faint bg-ink-soft px-3 py-2.5 text-[15px] leading-snug text-cream outline-none placeholder:text-grey focus:border-pink focus:bg-[#1a1418]"
-      />
-      {onRotate && (
+
+      <div ref={ref} className="relative">
+        {/* Collapsed trigger */}
         <button
           type="button"
-          onClick={onRotate}
-          className="font-mono self-end text-[10px] tracking-[0.1em] text-pink-soft hover:text-pink"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className={`font-mono flex w-full items-center justify-between gap-2 border bg-ink-soft px-3 py-2.5 text-left transition-colors ${
+            open ? 'border-pink bg-[#1a1418]' : 'border-border-faint hover:border-pink'
+          }`}
         >
-          ↻ different example
+          <span className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+            {count === 0 ? (
+              <span className="text-[14px] text-grey">{placeholder}</span>
+            ) : (
+              <>
+                {selected.map((s) => (
+                  <span
+                    key={s}
+                    className="border border-pink bg-pink px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-ink"
+                  >
+                    {s}
+                  </span>
+                ))}
+                {other.trim() && (
+                  <span className="border border-pink px-1.5 py-0.5 text-[10px] uppercase tracking-[0.04em] text-pink">
+                    {other.trim()}
+                  </span>
+                )}
+              </>
+            )}
+          </span>
+          <span
+            className={`font-mono shrink-0 text-[11px] text-pink-soft transition-transform ${open ? 'rotate-180' : ''}`}
+          >
+            ▾
+          </span>
         </button>
-      )}
+
+        {/* Dropdown panel */}
+        {open && (
+          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 flex max-h-[280px] flex-col overflow-y-auto border border-pink bg-ink-card shadow-[6px_6px_0_0_var(--color-pink-deep)]">
+            {SKILLS.map((s) => {
+              const on = selected.includes(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  role="option"
+                  aria-selected={on}
+                  onClick={() => onToggle(s)}
+                  className={`font-mono flex items-center gap-2.5 border-b border-border-faint px-3 py-2.5 text-left text-[13px] transition-colors last:border-b-0 ${
+                    on ? 'bg-pink/10 text-pink' : 'text-cream hover:bg-ink-soft'
+                  }`}
+                >
+                  <span
+                    className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center border text-[9px] ${
+                      on ? 'border-pink bg-pink text-ink' : 'border-grey'
+                    }`}
+                  >
+                    {on ? '✓' : ''}
+                  </span>
+                  {s}
+                </button>
+              );
+            })}
+            {/* Other row */}
+            <button
+              type="button"
+              onClick={() => setOtherOn((v) => !v)}
+              className={`font-mono flex items-center gap-2.5 border-b border-border-faint px-3 py-2.5 text-left text-[13px] transition-colors last:border-b-0 ${
+                otherActive ? 'bg-pink/10 text-pink' : 'text-cream-dim hover:bg-ink-soft'
+              }`}
+            >
+              <span
+                className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center border text-[9px] ${
+                  otherActive ? 'border-pink bg-pink text-ink' : 'border-grey'
+                }`}
+              >
+                {otherActive ? '✓' : ''}
+              </span>
+              + Other
+            </button>
+
+            {otherActive && (
+              <div className="flex flex-col gap-1 border-t border-pink-dim bg-ink-soft px-3 py-2.5">
+                <input
+                  value={other}
+                  onChange={(e) => onOther(e.target.value)}
+                  maxLength={MAX_OTHER}
+                  autoFocus={otherOn}
+                  placeholder={otherPlaceholder}
+                  className="font-mono w-full border border-border-faint bg-ink px-3 py-2 text-[14px] text-cream outline-none placeholder:text-grey focus:border-pink"
+                />
+                <span className="font-mono self-end text-[10px] text-cream-dim">
+                  {other.length}/{MAX_OTHER}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
