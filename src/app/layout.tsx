@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Anton, JetBrains_Mono, Noto_Sans_JP } from 'next/font/google';
 import './globals.css';
+import { ThemeScope } from './theme-scope';
 
 const anton = Anton({
   variable: '--font-display',
@@ -36,7 +37,10 @@ export default function RootLayout({
       lang="en"
       className={`${anton.variable} ${jetbrainsMono.variable} ${notoSansJP.variable} antialiased`}
     >
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen">
+        <ThemeScope />
+        {children}
+      </body>
     </html>
   );
 }
