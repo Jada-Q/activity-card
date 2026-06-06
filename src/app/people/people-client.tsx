@@ -34,6 +34,7 @@ export function PeopleClient({ people }: { people: Person[] }) {
       if (!q) return true;
       return (
         p.name.toLowerCase().includes(q) ||
+        (p.vibe ?? '').toLowerCase().includes(q) ||
         p.bio.toLowerCase().includes(q) ||
         p.lookingFor.toLowerCase().includes(q) ||
         p.tags.some((t) => t.toLowerCase().includes(q))
@@ -70,7 +71,7 @@ export function PeopleClient({ people }: { people: Person[] }) {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="search name / vibe / tag"
+          placeholder="search name / skills / wants"
           className="font-mono w-full bg-transparent text-[13px] text-cream placeholder:text-grey focus:outline-none"
         />
         {query && (
@@ -235,26 +236,21 @@ function PersonCard({
         </div>
       )}
 
-      {person.vibe ? (
+      {/* What they bring (vibe), falling back to legacy bio */}
+      {(person.vibe || person.bio) && (
         <p className="font-mono m-0 text-[13px] leading-snug text-cream">
-          {person.vibe}
+          {person.vibe || person.bio}
         </p>
-      ) : (
-        <>
-          {person.bio && (
-            <p className="font-mono m-0 text-[13px] leading-snug text-cream">
-              {person.bio}
-            </p>
-          )}
-          {person.lookingFor && (
-            <div className="mt-0.5 border-l-2 border-pink-dim pl-3">
-              <Eyebrow>LOOKING FOR</Eyebrow>
-              <p className="font-mono mt-1 text-[13px] leading-snug text-cream">
-                {person.lookingFor}
-              </p>
-            </div>
-          )}
-        </>
+      )}
+
+      {/* Teammate they want — shown for v5 cards regardless of vibe */}
+      {person.lookingFor && (
+        <div className="mt-0.5 border-l-2 border-pink-dim pl-3">
+          <Eyebrow>WANTS</Eyebrow>
+          <p className="font-mono mt-1 text-[13px] leading-snug text-cream">
+            {person.lookingFor}
+          </p>
+        </div>
       )}
 
       {person.tags.length > 0 && (
@@ -348,32 +344,21 @@ function FocusModal({
 
         <div className="hairline my-4" />
 
-        {person.vibe ? (
+        {(person.vibe || person.bio) && (
           <div className="mb-4">
-            <Eyebrow>THEIR VIBE</Eyebrow>
+            <Eyebrow>WHAT THEY BRING</Eyebrow>
             <p className="font-mono mt-1.5 text-sm leading-[1.5] text-cream">
-              {person.vibe}
+              {person.vibe || person.bio}
             </p>
           </div>
-        ) : (
-          <>
-            {person.bio && (
-              <div className="mb-4">
-                <Eyebrow>BIO</Eyebrow>
-                <p className="font-mono mt-1.5 text-sm leading-[1.5] text-cream">
-                  {person.bio}
-                </p>
-              </div>
-            )}
-            {person.lookingFor && (
-              <div className="mb-4 border-l-2 border-pink pl-3">
-                <Eyebrow color="var(--color-pink)">LOOKING FOR</Eyebrow>
-                <p className="font-mono mt-1.5 text-sm leading-[1.5] text-cream">
-                  {person.lookingFor}
-                </p>
-              </div>
-            )}
-          </>
+        )}
+        {person.lookingFor && (
+          <div className="mb-4 border-l-2 border-pink pl-3">
+            <Eyebrow color="var(--color-pink)">TEAMMATE THEY WANT</Eyebrow>
+            <p className="font-mono mt-1.5 text-sm leading-[1.5] text-cream">
+              {person.lookingFor}
+            </p>
+          </div>
         )}
 
         {person.tags.length > 0 && (
