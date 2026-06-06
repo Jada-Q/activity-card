@@ -6,6 +6,7 @@ import {
   Letterpress,
   SeedAvatar,
 } from '@/components/ornaments';
+import { MyCardLink } from './my-card-link';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 10;
@@ -56,6 +57,9 @@ export default async function LandingPage() {
           ))}
         </p>
       </div>
+
+      {/* Returning attendees: jump to their card (client-only) */}
+      <MyCardLink />
 
       {/* Single primary CTA */}
       <Link
