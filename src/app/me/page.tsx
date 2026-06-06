@@ -240,7 +240,7 @@ function NameCard({ person }: { person: Person }) {
         {panelOpen && (
           <div className="mt-3 flex flex-col gap-4 border border-border-faint bg-ink-soft px-4 py-3.5">
             {/* Color */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col items-center gap-2">
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cream-dim">
                 Color
               </span>
