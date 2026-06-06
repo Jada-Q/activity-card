@@ -205,13 +205,13 @@ function NameCard({ person }: { person: Person }) {
         className="pink-frame flicker-in flex w-full max-w-[760px] flex-col gap-4 bg-ink-card px-6 py-7 sm:px-10 sm:py-9 landscape:flex-row landscape:items-center landscape:gap-8"
         style={{ boxShadow: '10px 10px 0 0 var(--color-pink-deep)' }}
       >
-        {/* Left / top: identity — avatar stays top-left, name/handle centered
-            (portrait); landscape keeps avatar-top + left text for hand-over */}
-        <div className="flex shrink-0 flex-col gap-3 landscape:gap-5">
-          <div className="self-start">
+        {/* Identity — logo left, content right on one row (portrait);
+            landscape keeps avatar-top + left text for the hand-over view */}
+        <div className="flex shrink-0 flex-row items-center gap-4 landscape:flex-col landscape:items-start landscape:gap-5">
+          <div className="shrink-0">
             <SeedAvatar seed={person.name} size={96} />
           </div>
-          <div className="min-w-0 w-full text-center landscape:w-auto landscape:text-left">
+          <div className="min-w-0 flex-1 text-center landscape:flex-none landscape:text-left">
             <Eyebrow>AI MEETS HER · TOKYO</Eyebrow>
             {/* Name echoes the poster hero: Anton + the same SVG grain
                 knocked out of the letters (via Letterpress), tinted by the
