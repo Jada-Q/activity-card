@@ -125,12 +125,16 @@ export default function CreatePage() {
       try {
         if (json.data?.id) {
           localStorage.setItem(MY_CARD_ID_KEY, String(json.data.id));
+          // Hand the full card to /me so it renders instantly — without this,
+          // /me would query the label-filtered list which has 3-5s index lag
+          // and show "no card yet" right after creation.
+          sessionStorage.setItem('ac:my-card', JSON.stringify(json.data));
         }
       } catch {
-        /* localStorage may be blocked — non-blocking */
+        /* storage may be blocked — non-blocking */
       }
       setSuccess(true);
-      setTimeout(() => router.push('/me'), 2800);
+      setTimeout(() => router.push('/me'), 1600);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
       setSubmitting(false);

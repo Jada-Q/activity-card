@@ -147,6 +147,23 @@ export async function listPeople(): Promise<Person[]> {
     .filter((p): p is Person => p !== null);
 }
 
+/**
+ * Fetch a single card by its issue number. Unlike `listPeople` (which filters
+ * by label and is subject to GitHub's 3-5s search-index eventual consistency),
+ * GET issues/{number} is immediately consistent — so a freshly-created card is
+ * readable here right away. This is what /me uses to render reliably.
+ */
+export async function getPerson(id: string): Promise<Person | null> {
+  if (!/^\d+$/.test(id)) return null;
+  try {
+    const issue = await gh<GhIssue>(`/repos/${OWNER}/${REPO}/issues/${id}`);
+    if (issue.pull_request) return null;
+    return issueToPerson(issue);
+  } catch {
+    return null;
+  }
+}
+
 export async function createPerson(input: CreatePersonInput): Promise<Person> {
   const body = JSON.stringify({
     name: input.name,

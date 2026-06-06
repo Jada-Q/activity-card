@@ -17,27 +17,51 @@ export default function MePage() {
 
   useEffect(() => {
     let id: string | null = null;
+    let stashed: Person | null = null;
     try {
       id = localStorage.getItem(MY_CARD_ID_KEY);
+      const raw = sessionStorage.getItem('ac:my-card');
+      if (raw) {
+        const parsed = JSON.parse(raw) as Person;
+        if (parsed && (!id || parsed.id === id)) stashed = parsed;
+      }
     } catch {
-      /* localStorage blocked */
+      /* storage blocked */
+    }
+    // Instant first paint from the card we stashed at create time.
+    if (stashed) {
+      setState({ kind: 'ready', person: stashed });
+      if (!id) id = stashed.id;
     }
     if (!id) {
-      setState({ kind: 'nocard' });
+      if (!stashed) setState({ kind: 'nocard' });
       return;
     }
+
     let cancelled = false;
+    const cardId = id;
+    // Fetch the card by id (immediately consistent — no label-index lag) and
+    // refresh. Retry a few times to cover any transient hiccup; only fall back
+    // to "no card" if we never had a stashed card to show.
     (async () => {
-      try {
-        const res = await fetch('/api/people', { cache: 'no-store' });
-        const json = await res.json();
-        const people: Person[] = Array.isArray(json.data) ? json.data : [];
-        const mine = people.find((p) => p.id === id);
-        if (cancelled) return;
-        setState(mine ? { kind: 'ready', person: mine } : { kind: 'nocard' });
-      } catch {
-        if (!cancelled) setState({ kind: 'nocard' });
+      for (let attempt = 0; attempt < 4 && !cancelled; attempt++) {
+        try {
+          const res = await fetch(`/api/people/${cardId}`, {
+            cache: 'no-store',
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (!cancelled && json.data) {
+              setState({ kind: 'ready', person: json.data as Person });
+              return;
+            }
+          }
+        } catch {
+          /* retry */
+        }
+        await new Promise((r) => setTimeout(r, 1200));
       }
+      if (!cancelled && !stashed) setState({ kind: 'nocard' });
     })();
     return () => {
       cancelled = true;
