@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Eyebrow, SeedAvatar } from '@/components/ornaments';
 import type { Person } from '@/lib/github-store';
+import { SparkButton } from '@/app/spark-button';
 
 const MY_CARD_ID_KEY = 'ac:my-card-id';
 const TOP_N = 3;
@@ -314,6 +315,10 @@ function MatchCard({
           </button>
         </div>
       )}
+
+      <div className="mt-1 flex justify-end">
+        <SparkButton targetId={person.id} />
+      </div>
     </article>
   );
 }

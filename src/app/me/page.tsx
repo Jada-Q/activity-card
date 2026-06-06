@@ -355,6 +355,12 @@ function NameCard({ person }: { person: Person }) {
           Find teammates →
         </Link>
       </div>
+      <Link
+        href="/sparks"
+        className="font-mono mt-2 block w-full max-w-[760px] border border-pink py-2.5 text-center text-[11px] font-bold uppercase tracking-[0.15em] text-pink transition-colors hover:bg-pink hover:text-ink landscape:hidden"
+      >
+        ✦ Your teams (mutual sparks)
+      </Link>
     </main>
   );
 }

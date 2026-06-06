@@ -28,14 +28,17 @@ export default async function PeoplePage() {
         </Link>
         <div className="flex items-center gap-3">
           <Link
+            href="/sparks"
+            className="font-mono text-[11px] tracking-[0.1em] text-pink hover:text-pink-bright"
+          >
+            ✦ teams
+          </Link>
+          <Link
             href="/match"
             className="font-mono text-[11px] tracking-[0.1em] text-pink hover:text-pink-bright"
           >
             ai matches →
           </Link>
-          <span className="font-mono text-[11px] text-cream-dim">
-            {'{ wall }'}
-          </span>
         </div>
       </header>
 

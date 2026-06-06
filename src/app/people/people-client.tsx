@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Eyebrow, SeedAvatar } from '@/components/ornaments';
 import type { Person } from '@/lib/github-store';
+import { SparkButton } from '@/app/spark-button';
 
 const MY_CARD_ID_KEY = 'ac:my-card-id';
 
@@ -270,6 +271,12 @@ function PersonCard({
           ))}
         </div>
       )}
+
+      {!isYou && (
+        <div className="mt-1 flex justify-end">
+          <SparkButton targetId={person.id} />
+        </div>
+      )}
     </li>
   );
 }
@@ -378,22 +385,21 @@ function FocusModal({
 
         <div className="hairline my-3.5" />
 
-        <div className="flex gap-2">
+        <div className="flex items-stretch gap-2">
+          {!isYou && <SparkButton targetId={person.id} large />}
           <button
             type="button"
             onClick={onClose}
-            className="font-display flex-1 border-2 border-pink bg-pink px-4 py-2.5 text-base uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright"
+            className="font-mono border-2 border-border-faint px-4 text-xs uppercase tracking-[0.12em] text-cream-dim transition-colors hover:border-pink hover:text-pink"
           >
-            Say hi →
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="font-display flex-1 border-2 border-pink bg-transparent px-4 py-2.5 text-base uppercase tracking-[0.04em] text-pink transition-colors hover:bg-pink hover:text-ink"
-          >
-            Save
+            Close
           </button>
         </div>
+        {!isYou && (
+          <p className="font-mono mt-2 text-center text-[10px] leading-snug text-cream-dim">
+            ✦ Spark is private. Revealed only if you both spark each other.
+          </p>
+        )}
       </div>
     </div>
   );
