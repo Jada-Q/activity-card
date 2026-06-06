@@ -134,6 +134,10 @@ function NameCard({ person }: { person: Person }) {
           setThemeKey(s.theme);
         }
         if (s.mbti && MBTI.includes(s.mbti)) setMbtiKey(s.mbti);
+      } else {
+        // First-timer (nothing customized yet) — surface the panel expanded so
+        // they actually discover color / sign / MBTI.
+        setPanelOpen(true);
       }
     } catch {
       /* storage blocked */
@@ -252,9 +256,9 @@ function NameCard({ person }: { person: Person }) {
           type="button"
           onClick={() => setPanelOpen((v) => !v)}
           aria-expanded={panelOpen}
-          className="font-mono flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-pink-soft transition-colors hover:text-pink"
+          className="font-display flex w-full items-center justify-center gap-2.5 border-2 border-pink bg-pink py-3 text-lg uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright"
         >
-          <span>✎ Customize</span>
+          <span>✎ Customize · color · sign · MBTI</span>
           <span className={`transition-transform ${panelOpen ? 'rotate-180' : ''}`}>▾</span>
         </button>
 
