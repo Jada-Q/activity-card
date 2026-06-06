@@ -134,7 +134,26 @@ function t(pink: string, bright: string, soft: string, dim: string, deep: string
   };
 }
 
+// Each zodiac sign maps to one of the 12 color themes, element-flavored
+// (fire→warm, earth→green/silver, air→bright, water→cool). Picking a sign sets
+// the card color AND shows the glyph — one choice instead of two.
+const ZODIAC: { key: string; label: string; glyph: string; theme: string }[] = [
+  { key: 'aries', label: 'Aries', glyph: '♈', theme: 'coral' },
+  { key: 'taurus', label: 'Taurus', glyph: '♉', theme: 'spring' },
+  { key: 'gemini', label: 'Gemini', glyph: '♊', theme: 'sunshine' },
+  { key: 'cancer', label: 'Cancer', glyph: '♋', theme: 'cyan' },
+  { key: 'leo', label: 'Leo', glyph: '♌', theme: 'tangerine' },
+  { key: 'virgo', label: 'Virgo', glyph: '♍', theme: 'lime' },
+  { key: 'libra', label: 'Libra', glyph: '♎', theme: 'blush' },
+  { key: 'scorpio', label: 'Scorpio', glyph: '♏', theme: 'fuchsia' },
+  { key: 'sagittarius', label: 'Sagittarius', glyph: '♐', theme: 'amber' },
+  { key: 'capricorn', label: 'Capricorn', glyph: '♑', theme: 'silver' },
+  { key: 'aquarius', label: 'Aquarius', glyph: '♒', theme: 'azure' },
+  { key: 'pisces', label: 'Pisces', glyph: '♓', theme: 'violet' },
+];
+
 function NameCard({ person }: { person: Person }) {
+  const [signKey, setSignKey] = useState('');
   const [themeKey, setThemeKey] = useState('blush');
   const [panelOpen, setPanelOpen] = useState(false);
 
@@ -142,23 +161,33 @@ function NameCard({ person }: { person: Person }) {
     try {
       const raw = localStorage.getItem(STYLE_KEY);
       if (raw) {
-        const s = JSON.parse(raw) as { theme?: string };
-        if (s.theme && THEMES.some((x) => x.key === s.theme)) setThemeKey(s.theme);
+        const s = JSON.parse(raw) as { sign?: string; theme?: string };
+        const z = s.sign ? ZODIAC.find((x) => x.key === s.sign) : null;
+        if (z) {
+          setSignKey(z.key);
+          setThemeKey(z.theme);
+        } else if (s.theme && THEMES.some((x) => x.key === s.theme)) {
+          // legacy cards saved a bare theme before zodiac existed
+          setThemeKey(s.theme);
+        }
       }
     } catch {
       /* storage blocked */
     }
   }, []);
 
-  function persist(theme: string) {
+  function pick(z: { key: string; theme: string }) {
+    setSignKey(z.key);
+    setThemeKey(z.theme);
     try {
-      localStorage.setItem(STYLE_KEY, JSON.stringify({ theme }));
+      localStorage.setItem(STYLE_KEY, JSON.stringify({ sign: z.key }));
     } catch {
       /* non-blocking */
     }
   }
 
   const theme = THEMES.find((x) => x.key === themeKey) ?? THEMES[0];
+  const sign = ZODIAC.find((x) => x.key === signKey) ?? null;
 
   return (
     <main
@@ -193,6 +222,12 @@ function NameCard({ person }: { person: Person }) {
             {person.social && (
               <p className="font-mono mt-2 text-sm font-medium text-pink-soft break-all">
                 {person.social}
+              </p>
+            )}
+            {sign && (
+              <p className="font-mono mt-2 text-[13px] font-bold tracking-[0.25em] text-pink">
+                <span className="text-[16px]">{sign.glyph}</span>{' '}
+                {sign.label.toUpperCase()}
               </p>
             )}
           </div>
@@ -239,28 +274,28 @@ function NameCard({ person }: { person: Person }) {
 
         {panelOpen && (
           <div className="mt-3 flex flex-col gap-4 border border-border-faint bg-ink-soft px-4 py-3.5">
-            {/* Color */}
+            {/* Your sign → picks the card color + shows your glyph */}
             <div className="flex flex-col items-center gap-2">
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cream-dim">
-                Color
+                Your sign
               </span>
               <div className="grid w-max grid-cols-6 gap-2.5">
-                {THEMES.map((th) => {
-                  const on = th.key === themeKey;
+                {ZODIAC.map((z) => {
+                  const on = z.key === signKey;
+                  const c = THEMES.find((x) => x.key === z.theme) ?? THEMES[0];
                   return (
                     <button
-                      key={th.key}
+                      key={z.key}
                       type="button"
-                      title={th.label}
-                      aria-label={th.label}
+                      title={z.label}
+                      aria-label={z.label}
                       aria-pressed={on}
-                      onClick={() => {
-                        setThemeKey(th.key);
-                        persist(th.key);
-                      }}
-                      className={`h-7 w-7 rounded-full border-2 transition-transform ${on ? 'scale-110 border-cream' : 'border-transparent hover:scale-105'}`}
-                      style={{ background: th.vars['--color-pink'] }}
-                    />
+                      onClick={() => pick(z)}
+                      className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-[15px] leading-none text-ink transition-transform ${on ? 'scale-110 border-cream' : 'border-transparent hover:scale-105'}`}
+                      style={{ background: c.vars['--color-pink'] }}
+                    >
+                      {z.glyph}
+                    </button>
                   );
                 })}
               </div>
