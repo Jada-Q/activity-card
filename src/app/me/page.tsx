@@ -137,19 +137,21 @@ function t(pink: string, bright: string, soft: string, dim: string, deep: string
 // Each zodiac sign maps to one of the 12 color themes, element-flavored
 // (fire→warm, earth→green/silver, air→bright, water→cool). Picking a sign sets
 // the card color AND shows the glyph — one choice instead of two.
-const ZODIAC: { key: string; label: string; glyph: string; theme: string }[] = [
-  { key: 'aries', label: 'Aries', glyph: '♈', theme: 'coral' },
-  { key: 'taurus', label: 'Taurus', glyph: '♉', theme: 'spring' },
-  { key: 'gemini', label: 'Gemini', glyph: '♊', theme: 'sunshine' },
-  { key: 'cancer', label: 'Cancer', glyph: '♋', theme: 'cyan' },
-  { key: 'leo', label: 'Leo', glyph: '♌', theme: 'tangerine' },
-  { key: 'virgo', label: 'Virgo', glyph: '♍', theme: 'lime' },
-  { key: 'libra', label: 'Libra', glyph: '♎', theme: 'blush' },
-  { key: 'scorpio', label: 'Scorpio', glyph: '♏', theme: 'fuchsia' },
-  { key: 'sagittarius', label: 'Sagittarius', glyph: '♐', theme: 'amber' },
-  { key: 'capricorn', label: 'Capricorn', glyph: '♑', theme: 'silver' },
-  { key: 'aquarius', label: 'Aquarius', glyph: '♒', theme: 'azure' },
-  { key: 'pisces', label: 'Pisces', glyph: '♓', theme: 'violet' },
+// Dates = standard tropical Sun-sign ranges (Almanac/Britannica). Cusp births
+// can vary ±1 day by year — fine for a name-card flourish.
+const ZODIAC: { key: string; label: string; glyph: string; dates: string; theme: string }[] = [
+  { key: 'aries', label: 'Aries', glyph: '♈', dates: 'Mar 21 – Apr 19', theme: 'coral' },
+  { key: 'taurus', label: 'Taurus', glyph: '♉', dates: 'Apr 20 – May 20', theme: 'spring' },
+  { key: 'gemini', label: 'Gemini', glyph: '♊', dates: 'May 21 – Jun 20', theme: 'sunshine' },
+  { key: 'cancer', label: 'Cancer', glyph: '♋', dates: 'Jun 21 – Jul 22', theme: 'cyan' },
+  { key: 'leo', label: 'Leo', glyph: '♌', dates: 'Jul 23 – Aug 22', theme: 'tangerine' },
+  { key: 'virgo', label: 'Virgo', glyph: '♍', dates: 'Aug 23 – Sep 22', theme: 'lime' },
+  { key: 'libra', label: 'Libra', glyph: '♎', dates: 'Sep 23 – Oct 22', theme: 'blush' },
+  { key: 'scorpio', label: 'Scorpio', glyph: '♏', dates: 'Oct 23 – Nov 21', theme: 'fuchsia' },
+  { key: 'sagittarius', label: 'Sagittarius', glyph: '♐', dates: 'Nov 22 – Dec 21', theme: 'amber' },
+  { key: 'capricorn', label: 'Capricorn', glyph: '♑', dates: 'Dec 22 – Jan 19', theme: 'silver' },
+  { key: 'aquarius', label: 'Aquarius', glyph: '♒', dates: 'Jan 20 – Feb 18', theme: 'azure' },
+  { key: 'pisces', label: 'Pisces', glyph: '♓', dates: 'Feb 19 – Mar 20', theme: 'violet' },
 ];
 
 function NameCard({ person }: { person: Person }) {
@@ -279,7 +281,7 @@ function NameCard({ person }: { person: Person }) {
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cream-dim">
                 Your sign
               </span>
-              <div className="grid w-max grid-cols-6 gap-2.5">
+              <div className="grid w-full grid-cols-2 gap-2">
                 {ZODIAC.map((z) => {
                   const on = z.key === signKey;
                   const c = THEMES.find((x) => x.key === z.theme) ?? THEMES[0];
@@ -287,14 +289,25 @@ function NameCard({ person }: { person: Person }) {
                     <button
                       key={z.key}
                       type="button"
-                      title={z.label}
-                      aria-label={z.label}
+                      aria-label={`${z.label} ${z.dates}`}
                       aria-pressed={on}
                       onClick={() => pick(z)}
-                      className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-[15px] leading-none text-ink transition-transform ${on ? 'scale-110 border-cream' : 'border-transparent hover:scale-105'}`}
-                      style={{ background: c.vars['--color-pink'] }}
+                      className={`flex items-center gap-2 border px-2 py-1.5 text-left transition-colors ${on ? 'border-pink bg-pink/10' : 'border-border-faint hover:border-pink'}`}
                     >
-                      {z.glyph}
+                      <span
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] leading-none text-ink"
+                        style={{ background: c.vars['--color-pink'] }}
+                      >
+                        {z.glyph}
+                      </span>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="font-mono text-[12px] font-bold leading-tight text-cream">
+                          {z.label}
+                        </span>
+                        <span className="font-mono text-[9px] leading-tight text-cream-dim">
+                          {z.dates}
+                        </span>
+                      </span>
                     </button>
                   );
                 })}
