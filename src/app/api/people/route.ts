@@ -8,11 +8,13 @@ export const revalidate = 10;
 
 const CreateSchema = z.object({
   name: z.string().min(1).max(60),
+  // "What you bring" — skills/background, embedded for similar-match.
   vibe: z.string().max(300).default(''),
+  // "Teammate skills you want" — embedded for complementary-match.
+  lookingFor: z.string().max(300).default(''),
   social: z.string().max(80).default(''),
-  // Legacy fields — accepted for backward compat but unused by new /create flow.
+  // Legacy fields — accepted for backward compat but unused by v5 flow.
   bio: z.string().max(200).default(''),
-  lookingFor: z.string().max(200).default(''),
   tags: z.array(z.string().min(1).max(30)).max(3).default([]),
 });
 
@@ -46,12 +48,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Compute embedding from the vibe sentence (skip silently if no key).
-    // Returns null on failure — card still gets created without it, just
-    // skipped on /match.
-    const embedding = parsed.data.vibe
-      ? await embedText(parsed.data.vibe)
-      : null;
+    // Embed both the skills sentence and the wanted-skills sentence (skip
+    // silently if no key). Each returns null on failure — card still gets
+    // created, just skipped on the corresponding /match tab.
+    const [embedding, wantEmbedding] = await Promise.all([
+      parsed.data.vibe ? embedText(parsed.data.vibe) : Promise.resolve(null),
+      parsed.data.lookingFor
+        ? embedText(parsed.data.lookingFor)
+        : Promise.resolve(null),
+    ]);
 
     const person = await createPerson({
       name: parsed.data.name,
@@ -61,6 +66,7 @@ export async function POST(req: Request) {
       tags: parsed.data.tags,
       vibe: parsed.data.vibe,
       embedding: embedding ?? undefined,
+      wantEmbedding: wantEmbedding ?? undefined,
     });
     return NextResponse.json({ data: person, error: null });
   } catch (e) {

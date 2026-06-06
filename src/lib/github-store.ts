@@ -40,11 +40,18 @@ export type Person = {
    */
   vibe?: string;
   /**
-   * 256-dim Gemini embedding of `vibe`. Present only when GEMINI_API_KEY
-   * was configured at write time AND the API call succeeded. Cards without
-   * this field are skipped on /match but still show on /people.
+   * 256-dim Gemini embedding of `vibe` (= "what you bring" / skills+background).
+   * Present only when GEMINI_API_KEY was configured at write time AND the API
+   * call succeeded. Cards without this field are skipped on /match but still
+   * show on /people.
    */
   embedding?: number[];
+  /**
+   * 256-dim Gemini embedding of `lookingFor` (= teammate skills wanted).
+   * Powers the complementary-match tab (my-wanted × their-skills). Cards
+   * predating v5 won't have this — they're skipped in complementary mode.
+   */
+  wantEmbedding?: number[];
   createdAt: string;
 };
 
@@ -56,6 +63,7 @@ export type CreatePersonInput = {
   tags: string[];
   vibe?: string;
   embedding?: number[];
+  wantEmbedding?: number[];
 };
 
 type GhIssue = {
@@ -74,6 +82,7 @@ type StoredCard = {
   tags?: string[];
   vibe?: string;
   embedding?: number[];
+  wantEmbedding?: number[];
 };
 
 function issueToPerson(issue: GhIssue): Person | null {
@@ -93,6 +102,9 @@ function issueToPerson(issue: GhIssue): Person | null {
     tags: Array.isArray(parsed.tags) ? parsed.tags : [],
     vibe: typeof parsed.vibe === 'string' ? parsed.vibe : undefined,
     embedding: Array.isArray(parsed.embedding) ? parsed.embedding : undefined,
+    wantEmbedding: Array.isArray(parsed.wantEmbedding)
+      ? parsed.wantEmbedding
+      : undefined,
     createdAt: issue.created_at,
   };
 }
@@ -144,6 +156,7 @@ export async function createPerson(input: CreatePersonInput): Promise<Person> {
     tags: input.tags,
     vibe: input.vibe,
     embedding: input.embedding,
+    wantEmbedding: input.wantEmbedding,
   });
   const issue = await gh<GhIssue>(`/repos/${OWNER}/${REPO}/issues`, {
     method: 'POST',
