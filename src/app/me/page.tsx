@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Eyebrow, Letterpress, SeedAvatar } from '@/components/ornaments';
 import type { Person } from '@/lib/github-store';
 import {
@@ -139,6 +139,63 @@ function NameCard({ person }: { person: Person }) {
   const [mbtiKey, setMbtiKey] = useState('');
   const [themeKey, setThemeKey] = useState('blush');
   const [panelOpen, setPanelOpen] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const [saveState, setSaveState] = useState<
+    'idle' | 'working' | 'shared' | 'downloaded' | 'error'
+  >('idle');
+
+  // Render the card to a PNG and hand it to the OS. On iOS the share sheet's
+  // "Save Image" drops it straight into Photos; elsewhere we fall back to a
+  // file download. Keeps the screenshot path as a backstop for old browsers.
+  async function saveCard() {
+    const node = exportRef.current;
+    if (!node || saveState === 'working') return;
+    setSaveState('working');
+    try {
+      const { toBlob } = await import('html-to-image');
+      // Two passes: webfonts (Anton) often miss on the first capture before
+      // they're embedded; the second pass renders them reliably.
+      const opts = {
+        pixelRatio: 2,
+        backgroundColor: '#0a0a0a',
+        // Drop the Letterpress grain overlay — its background-clip:text +
+        // mix-blend-mode collapses to black in html-to-image, killing the
+        // name. Excluding it leaves the solid theme-coloured base layer.
+        filter: (node: HTMLElement) =>
+          !node.classList?.contains?.('lp-grain'),
+      };
+      await toBlob(node, opts);
+      const blob = await toBlob(node, opts);
+      if (!blob) throw new Error('render returned no blob');
+      const file = new File(
+        [blob],
+        `ai-meets-her-${(person.name || 'card').replace(/\s+/g, '-').toLowerCase()}.png`,
+        { type: 'image/png' },
+      );
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'AI MEETS HER' });
+        setSaveState('shared');
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        setSaveState('downloaded');
+      }
+    } catch (err) {
+      // User dismissing the share sheet throws AbortError — not a real failure.
+      if ((err as Error)?.name === 'AbortError') {
+        setSaveState('idle');
+        return;
+      }
+      console.warn('[saveCard] failed', err);
+      setSaveState('error');
+    }
+  }
 
   useEffect(() => {
     try {
@@ -269,30 +326,38 @@ function NameCard({ person }: { person: Person }) {
         </div>
       </div>
 
-      {/* Screenshot reminder — there's no login; a screenshot is the only way
-          to keep your card after the event. Two-hands camera logo frames the
-          message; text is flush-left. Portrait only, mirroring the rotate-hint
-          / actions that hide in the clean landscape "show" view. */}
-      <div className="mt-4 flex w-full max-w-[760px] items-center justify-center gap-3 landscape:hidden">
+      {/* Save to Photos — the two-hands camera logo IS the button. Tapping it
+          renders the card to a horizontal PNG and hands it to the OS (iOS share
+          sheet → Save Image → Photos, else download). Portrait only. */}
+      <button
+        type="button"
+        onClick={saveCard}
+        disabled={saveState === 'working'}
+        aria-label="Save card to Photos"
+        className="mt-4 flex w-full max-w-[760px] items-center justify-center gap-3 transition-opacity hover:opacity-90 disabled:opacity-60 landscape:hidden"
+      >
         <Hand src="/hand-left.png" width={40} />
         <div className="flex flex-col items-center text-center">
-          <span className="font-mono whitespace-nowrap text-[9px] uppercase tracking-[0.2em] text-pink-soft">
-            ↻ Rotate phone to landscape
-          </span>
-          {/* inline letterSpacing — beats globals' `.font-display{letter-spacing:0.005em}`
-              which otherwise overrides the Tailwind tracking utility */}
+          {/* inline letterSpacing — beats globals' `.font-display{letter-spacing:0.005em}` */}
           <span
-            className="font-display mt-1 whitespace-nowrap text-[14px] uppercase leading-[1.0] text-cream"
+            className="font-display whitespace-nowrap text-[15px] uppercase leading-[1.0] text-cream"
             style={{ letterSpacing: '0.1em' }}
           >
-            Rotate, then screenshot
+            Save card to Photos
           </span>
-          <span className="font-mono mt-1 whitespace-nowrap text-[9px] uppercase tracking-[0.18em] text-pink-soft">
-            landscape = the clean card
+          <span
+            aria-live="polite"
+            className="font-mono mt-1 whitespace-nowrap text-[9px] uppercase tracking-[0.2em] text-pink-soft"
+          >
+            {saveState === 'idle' && '↓ one tap to your album'}
+            {saveState === 'working' && 'saving…'}
+            {saveState === 'shared' && 'tap “Save Image”'}
+            {saveState === 'downloaded' && 'saved to downloads'}
+            {saveState === 'error' && 'couldn’t save — try again'}
           </span>
         </div>
         <Hand src="/hand-right.png" width={43} />
-      </div>
+      </button>
 
       {/* Customize — portrait only, hidden when you flip to show the card */}
       <div className="mt-5 w-full max-w-[760px] landscape:hidden">
@@ -405,6 +470,86 @@ function NameCard({ person }: { person: Person }) {
       >
         ✦ Your teams (mutual sparks)
       </Link>
+
+      {/* Off-screen horizontal card — the artifact saveCard() captures. Always
+          the clean landscape "business card" layout at a fixed width, so the
+          downloaded PNG is consistent regardless of the phone's orientation.
+          Mirrors the on-screen landscape layout but hard-coded to flex-row. */}
+      <div
+        aria-hidden="true"
+        style={{ position: 'absolute', left: '-99999px', top: 0, pointerEvents: 'none' }}
+      >
+        <div
+          ref={exportRef}
+          style={{
+            width: 860,
+            padding: 28,
+            background: 'var(--color-ink)',
+            ...(theme.vars as React.CSSProperties),
+          }}
+        >
+          <div
+            className="pink-frame flex flex-row items-center gap-8 bg-ink-card"
+            style={{ padding: '40px 48px', boxShadow: '12px 12px 0 0 var(--color-pink-deep)' }}
+          >
+            <div className="flex shrink-0 flex-col items-start gap-5">
+              <SeedAvatar seed={person.name} size={108} />
+              <div className="text-left">
+                <Eyebrow>AI MEETS HER · TOKYO</Eyebrow>
+                <h1 className="m-0 mt-1.5">
+                  <Letterpress className="text-[56px] leading-[0.95]">
+                    {person.name || '—'}
+                  </Letterpress>
+                </h1>
+                {person.social && (
+                  <p className="font-mono mt-2 text-[17px] font-medium text-pink-soft">
+                    {person.social}
+                  </p>
+                )}
+                {(sign || mbtiKey) && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {sign && (
+                      <span className="font-mono text-[15px] font-bold tracking-[0.25em] text-pink">
+                        <span className="text-[18px]">{sign.glyph}</span>{' '}
+                        {sign.label.toUpperCase()}
+                      </span>
+                    )}
+                    {mbtiKey && (
+                      <span className="font-mono text-[15px] font-bold tracking-[0.2em] text-pink">
+                        {mbtiKey}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div
+              className="self-stretch"
+              style={{ width: 1, background: 'var(--color-border-faint)' }}
+            />
+
+            <div className="flex min-w-0 flex-1 flex-col gap-5">
+              {person.vibe && (
+                <div>
+                  <Eyebrow>WHAT I BRING</Eyebrow>
+                  <p className="font-mono mt-1.5 text-[17px] leading-[1.5] text-cream">
+                    {person.vibe}
+                  </p>
+                </div>
+              )}
+              {person.lookingFor && (
+                <div className="border-l-2 border-pink pl-3">
+                  <Eyebrow color="var(--color-pink)">TEAMMATE I WANT</Eyebrow>
+                  <p className="font-mono mt-1.5 text-[17px] leading-[1.5] text-cream">
+                    {person.lookingFor}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
