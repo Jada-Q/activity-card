@@ -110,6 +110,30 @@ export default function MePage() {
   return <NameCard person={state.person} />;
 }
 
+// One hand of the two-hands camera logo, recolored to the active theme via a
+// CSS mask (the source PNGs are alpha silhouettes). The pair frames the
+// screenshot reminder, with the lens ring removed so text sits in the gap.
+function Hand({ src, width }: { src: string; width: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="block shrink-0 bg-pink"
+      style={{
+        height: 52,
+        width,
+        WebkitMaskImage: `url(${src})`,
+        maskImage: `url(${src})`,
+        WebkitMaskSize: 'contain',
+        maskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        maskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+        maskPosition: 'center',
+      }}
+    />
+  );
+}
+
 function NameCard({ person }: { person: Person }) {
   const [signKey, setSignKey] = useState('');
   const [mbtiKey, setMbtiKey] = useState('');
@@ -248,6 +272,23 @@ function NameCard({ person }: { person: Person }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Screenshot reminder — there's no login; a screenshot is the only way
+          to keep your card after the event. Two-hands camera logo frames the
+          message; text is flush-left. Portrait only, mirroring the rotate-hint
+          / actions that hide in the clean landscape "show" view. */}
+      <div className="mt-4 flex w-full max-w-[760px] items-center justify-center gap-3 landscape:hidden">
+        <Hand src="/hand-left.png" width={40} />
+        <div className="flex min-w-0 flex-col text-left">
+          <span className="font-display whitespace-nowrap text-[15px] uppercase leading-[1.0] tracking-[0.01em] text-cream">
+            Screenshot to keep your card
+          </span>
+          <span className="font-mono mt-1.5 text-[10px] uppercase tracking-[0.16em] text-pink-soft">
+            use it anytime after today
+          </span>
+        </div>
+        <Hand src="/hand-right.png" width={43} />
       </div>
 
       {/* Customize — portrait only, hidden when you flip to show the card */}
