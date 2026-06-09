@@ -199,11 +199,6 @@ function NameCard({ person }: { person: Person }) {
       className="relative flex min-h-[100svh] w-full flex-col items-center justify-center overflow-hidden px-4 py-6"
       style={theme.vars as React.CSSProperties}
     >
-      {/* Rotate hint — only shows in portrait */}
-      <div className="font-mono pointer-events-none fixed left-1/2 top-3 z-10 -translate-x-1/2 whitespace-nowrap text-[10px] tracking-[0.3em] text-pink-soft landscape:hidden">
-        ↻ ROTATE PHONE TO LANDSCAPE
-      </div>
-
       <div
         className="pink-frame flicker-in flex w-full max-w-[760px] flex-col gap-4 bg-ink-card px-6 py-7 sm:px-10 sm:py-9 landscape:flex-row landscape:items-center landscape:gap-8"
         style={{ boxShadow: '10px 10px 0 0 var(--color-pink-deep)' }}
@@ -280,11 +275,19 @@ function NameCard({ person }: { person: Person }) {
           / actions that hide in the clean landscape "show" view. */}
       <div className="mt-4 flex w-full max-w-[760px] items-center justify-center gap-3 landscape:hidden">
         <Hand src="/hand-left.png" width={40} />
-        <div className="flex flex-col text-center">
-          <span className="font-display whitespace-nowrap text-[15px] uppercase leading-[1.0] tracking-[0.13em] text-cream">
+        <div className="flex flex-col items-center text-center">
+          <span className="font-mono whitespace-nowrap text-[9px] uppercase tracking-[0.2em] text-pink-soft">
+            ↻ Rotate phone to landscape
+          </span>
+          {/* inline letterSpacing — beats globals' `.font-display{letter-spacing:0.005em}`
+              which otherwise overrides the Tailwind tracking utility */}
+          <span
+            className="font-display mt-1 whitespace-nowrap text-[14px] uppercase leading-[1.0] text-cream"
+            style={{ letterSpacing: '0.1em' }}
+          >
             Rotate, then screenshot
           </span>
-          <span className="font-mono mt-1.5 whitespace-nowrap text-[10px] uppercase tracking-[0.2em] text-pink-soft">
+          <span className="font-mono mt-1 whitespace-nowrap text-[9px] uppercase tracking-[0.18em] text-pink-soft">
             landscape = the clean card
           </span>
         </div>
