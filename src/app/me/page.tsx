@@ -280,13 +280,11 @@ function NameCard({ person }: { person: Person }) {
           / actions that hide in the clean landscape "show" view. */}
       <div className="mt-4 flex w-full max-w-[760px] items-center justify-center gap-3 landscape:hidden">
         <Hand src="/hand-left.png" width={40} />
-        {/* Column sizes to the wider line (w-max); both lines justify to fill
-            it, so left AND right edges align (両端揃え) at any width. */}
-        <div className="flex w-max flex-col">
-          <span className="font-display block w-full whitespace-nowrap text-[15px] uppercase leading-[1.0] tracking-[0.01em] text-cream text-justify [text-align-last:justify]">
+        <div className="flex flex-col text-center">
+          <span className="font-display whitespace-nowrap text-[15px] uppercase leading-[1.0] tracking-[0.13em] text-cream">
             Rotate, then screenshot
           </span>
-          <span className="font-mono mt-1.5 block w-full whitespace-nowrap text-[10px] uppercase tracking-[0.16em] text-pink-soft text-justify [text-align-last:justify]">
+          <span className="font-mono mt-1.5 whitespace-nowrap text-[10px] uppercase tracking-[0.2em] text-pink-soft">
             landscape = the clean card
           </span>
         </div>
