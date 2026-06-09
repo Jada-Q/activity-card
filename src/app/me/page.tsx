@@ -140,9 +140,13 @@ function NameCard({ person }: { person: Person }) {
   const [themeKey, setThemeKey] = useState('blush');
   const [panelOpen, setPanelOpen] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
+  const customizeRef = useRef<HTMLDivElement>(null);
   const [saveState, setSaveState] = useState<
     'idle' | 'working' | 'shared' | 'downloaded' | 'error'
   >('idle');
+  // Gate: warn before saving an un-customised card (no sign + no MBTI picked),
+  // since the Save button sits above Customize and people save too early.
+  const [confirmSave, setConfirmSave] = useState(false);
 
   // Render the card to a PNG and hand it to the OS. On iOS the share sheet's
   // "Save Image" drops it straight into Photos; elsewhere we fall back to a
@@ -195,6 +199,23 @@ function NameCard({ person }: { person: Person }) {
       console.warn('[saveCard] failed', err);
       setSaveState('error');
     }
+  }
+
+  // Save button entry point: if nothing's been customised yet, ask first;
+  // otherwise save straight away.
+  function requestSave() {
+    if (saveState === 'working') return;
+    if (!signKey && !mbtiKey) {
+      setConfirmSave(true);
+      return;
+    }
+    saveCard();
+  }
+
+  function goCustomize() {
+    setConfirmSave(false);
+    setPanelOpen(true);
+    customizeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   useEffect(() => {
@@ -331,7 +352,7 @@ function NameCard({ person }: { person: Person }) {
           sheet → Save Image → Photos, else download). Portrait only. */}
       <button
         type="button"
-        onClick={saveCard}
+        onClick={requestSave}
         disabled={saveState === 'working'}
         aria-label="Save card to Photos"
         className="mt-4 flex w-full max-w-[760px] items-center justify-center gap-3 transition-opacity hover:opacity-90 disabled:opacity-60 landscape:hidden"
@@ -359,8 +380,38 @@ function NameCard({ person }: { person: Person }) {
         <Hand src="/hand-right.png" width={43} />
       </button>
 
+      {/* Pre-save nudge — only when nothing's been customised yet */}
+      {confirmSave && (
+        <div className="mt-3 flex w-full max-w-[760px] flex-col items-center gap-2.5 border border-pink-dim bg-ink-soft px-4 py-3.5 text-center landscape:hidden">
+          <p className="font-mono text-[11px] leading-relaxed tracking-[0.1em] text-cream">
+            Add your color · sign · MBTI first?
+            <br />
+            <span className="text-pink-soft">it makes the card yours</span>
+          </p>
+          <div className="flex w-full gap-2">
+            <button
+              type="button"
+              onClick={goCustomize}
+              className="font-display flex-1 border-2 border-pink bg-pink py-2 text-center text-base uppercase tracking-[0.04em] text-ink transition-colors hover:bg-pink-bright"
+            >
+              ✎ Customize first
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmSave(false);
+                saveCard();
+              }}
+              className="font-display flex-1 border-2 border-pink bg-transparent py-2 text-center text-base uppercase tracking-[0.04em] text-pink transition-colors hover:bg-pink hover:text-ink"
+            >
+              Save as-is
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Customize — portrait only, hidden when you flip to show the card */}
-      <div className="mt-5 w-full max-w-[760px] landscape:hidden">
+      <div ref={customizeRef} className="mt-5 w-full max-w-[760px] landscape:hidden">
         <button
           type="button"
           onClick={() => setPanelOpen((v) => !v)}
