@@ -282,10 +282,10 @@ function NameCard({ person }: { person: Person }) {
         <Hand src="/hand-left.png" width={40} />
         <div className="flex min-w-0 flex-col text-left">
           <span className="font-display whitespace-nowrap text-[15px] uppercase leading-[1.0] tracking-[0.01em] text-cream">
-            Screenshot to keep your card
+            Rotate, then screenshot
           </span>
           <span className="font-mono mt-1.5 text-[10px] uppercase tracking-[0.16em] text-pink-soft">
-            use it anytime after today
+            landscape = the clean card
           </span>
         </div>
         <Hand src="/hand-right.png" width={43} />
