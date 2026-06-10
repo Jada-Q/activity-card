@@ -56,6 +56,9 @@ export default async function LandingPage() {
             </span>
           ))}
         </p>
+        <p className="mt-3 font-mono text-[12px] tracking-[0.08em] text-pink-soft">
+          Drop your digital name card &middot; See who&apos;s in the room
+        </p>
       </div>
 
       {/* Returning attendees: jump to their card (client-only) */}
