@@ -148,15 +148,23 @@ export async function listPeople(): Promise<Person[]> {
   if (peopleCache && Date.now() - peopleCache.at < PEOPLE_TTL_MS) {
     return peopleCache.data;
   }
-  const issues = await gh<GhIssue[]>(`/repos/${OWNER}/${REPO}/issues`, {
-    searchParams: {
-      labels: CARD_LABEL,
-      state: 'open',
-      per_page: '100',
-      sort: 'created',
-      direction: 'desc',
-    },
-  });
+  // Paginate: GitHub caps per_page at 100 — a 120-person room needs page 2.
+  // 5-page ceiling (500 people) is a safety stop, far above any expected event.
+  const issues: GhIssue[] = [];
+  for (let page = 1; page <= 5; page++) {
+    const batch = await gh<GhIssue[]>(`/repos/${OWNER}/${REPO}/issues`, {
+      searchParams: {
+        labels: CARD_LABEL,
+        state: 'open',
+        per_page: '100',
+        page: String(page),
+        sort: 'created',
+        direction: 'desc',
+      },
+    });
+    issues.push(...batch);
+    if (batch.length < 100) break;
+  }
   const data = issues
     .filter((i) => !i.pull_request)
     .map(issueToPerson)
