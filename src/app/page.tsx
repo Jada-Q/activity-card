@@ -50,7 +50,7 @@ export default async function LandingPage() {
         </h1>
         <p className="mx-auto mt-[22px] max-w-[380px] font-mono text-[16px] font-medium leading-snug text-cream">
           {TAGLINE.map((line, i) => (
-            <span key={i}>
+            <span key={i} className={line === 'To' ? 'text-pink' : undefined}>
               {line}
               {i < TAGLINE.length - 1 && <br />}
             </span>
