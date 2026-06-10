@@ -3,6 +3,10 @@
 > Digital name card + collab-match wall for in-person events.
 > Built for AI MEETS HER (femcode collective, Tokyo 2026) — generalised for future events.
 
+**Live:** [ai-meets-her.vercel.app](https://ai-meets-her.vercel.app)
+
+![activity-card — drop your digital name card, see who's in the room](docs/screenshot.png)
+
 ## Stack
 
 - Next.js 16 (App Router) + React 19 + TypeScript
