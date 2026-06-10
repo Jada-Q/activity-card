@@ -37,7 +37,7 @@ export default async function LandingPage() {
       </div>
 
       {/* Hero — title (letterpress) + tagline, no frame */}
-      <div className="mb-8 text-left">
+      <div className="mb-8 text-center">
         <h1
           className="m-0 font-display"
           style={{
@@ -48,7 +48,7 @@ export default async function LandingPage() {
         >
           <Letterpress>{EVENT_NAME}</Letterpress>
         </h1>
-        <p className="mt-[18px] max-w-[380px] font-mono text-[15px] font-medium leading-snug text-cream">
+        <p className="mx-auto mt-[18px] max-w-[380px] font-mono text-[15px] font-medium leading-snug text-cream">
           {TAGLINE.map((line, i) => (
             <span key={i}>
               {line}
@@ -111,6 +111,11 @@ export default async function LandingPage() {
                 <SeedAvatar seed={p.name} size={32} />
               </div>
             ))
+          )}
+          {count > preview.length && (
+            <span className="ml-1.5 self-center font-mono text-[11px] font-bold tracking-[0.02em] text-pink-soft">
+              +{count - preview.length}
+            </span>
           )}
         </div>
         <div className="min-w-0 flex-1">
