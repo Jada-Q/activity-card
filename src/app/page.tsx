@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 10;
 
 const EVENT_NAME = 'AI MEETS HER';
-const TAGLINE = ['Vibe Coding Day To', 'Visualize Your Dream'];
+const TAGLINE = ['Vibe Coding Day', 'To', 'Visualize Your Dream'];
 
 export default async function LandingPage() {
   let people: Awaited<ReturnType<typeof listPeople>> = [];
@@ -41,14 +41,14 @@ export default async function LandingPage() {
         <h1
           className="m-0 font-display"
           style={{
-            fontSize: 'clamp(44px, 11vw, 64px)',
+            fontSize: 'clamp(48px, 13vw, 88px)',
             lineHeight: 0.9,
             letterSpacing: '0.005em',
           }}
         >
           <Letterpress>{EVENT_NAME}</Letterpress>
         </h1>
-        <p className="mx-auto mt-[18px] max-w-[380px] font-mono text-[15px] font-medium leading-snug text-cream">
+        <p className="mx-auto mt-[22px] max-w-[380px] font-mono text-[16px] font-medium leading-snug text-cream">
           {TAGLINE.map((line, i) => (
             <span key={i}>
               {line}
@@ -56,8 +56,11 @@ export default async function LandingPage() {
             </span>
           ))}
         </p>
-        <p className="mt-3 font-mono text-[12px] tracking-[0.08em] text-pink-soft">
-          Drop your digital name card &middot; See who&apos;s in the room
+        <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.18em] text-pink-soft">
+          Drop your digital name card
+          <span className="hidden sm:inline"> &middot; </span>
+          <br className="sm:hidden" />
+          See who&apos;s in the room
         </p>
       </div>
 
